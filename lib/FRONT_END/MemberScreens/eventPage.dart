@@ -32,7 +32,7 @@ class _EventPageState extends State<EventPage> {
   int clickCount = 0;
   List<String> weatherAlertsQueue = [];
   bool isAlertShowing = false;
-
+  bool isNavigatingToEditEvent = false;
   @override
   void initState() {
     super.initState();
@@ -121,10 +121,10 @@ class _EventPageState extends State<EventPage> {
   }
 
   Future<void> showNextWeatherAlert(String documentId, DateTime date) async {
-    if (weatherAlertsQueue.isNotEmpty) {
+    if (weatherAlertsQueue.isNotEmpty && !isNavigatingToEditEvent) {
       isAlertShowing = true;
       String alertMessage = weatherAlertsQueue.removeAt(0);
-      await showWeatherAlertDialog(alertMessage, documentId, date); // Pass documentId and date
+      await showWeatherAlertDialog(alertMessage, documentId, date);
       await Future.delayed(Duration(milliseconds: 100)); // Small delay between alerts
       await showNextWeatherAlert(documentId, date); // Show the next alert
     } else {
@@ -157,12 +157,16 @@ class _EventPageState extends State<EventPage> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                Navigator.pop(context); // Close the alert dialog
+              },
               child: Text('Dismiss', style: TextStyle(color: Colors.red)),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(context); // Close the alert dialog
+                isNavigatingToEditEvent = true; // Set the flag to true
+                // Navigate to the EditEvent page after the dialog is closed
                 Navigator.push(
                   context,
                   MaterialPageRoute(
