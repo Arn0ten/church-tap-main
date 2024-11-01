@@ -80,28 +80,40 @@ class _EventPageState extends State<EventPage> {
 
   //Mo check sa weather condition sa specific date
   Future<void> checkWeatherForEvent(String appointmentType, DateTime date, String documentId) async {
-    //API key sa tomorrow.io
     String apiKey = '8f3a453d50754f8180720342240111';
     String formattedDate = '${date.year}-${date.month}-${date.day}';
-    String url = 'https://api.weatherapi.com/v1/forecast.json?key=$apiKey&q=Tagum City,Davao del Norte&days=1&dt=$formattedDate';
+    String url = 'https://api.weatherapi.com/v1/forecast.json?key=$apiKey&q=Tagum City,Davao del Norte&days=7&dt=$formattedDate';
+
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
         log("Weather API Response: $data");
-        String weatherCondition = data['forecast']['forecastday'][0]['day']['condition']['text'];
-        bool badWeatherPredicted = weatherCondition.toLowerCase().contains('rain') ||
-            weatherCondition.toLowerCase().contains('thunderstorm') ||
-            weatherCondition.toLowerCase().contains('snow') ||
-            weatherCondition.toLowerCase().contains('sleet') ||
-            weatherCondition.toLowerCase().contains('hail') ||
-            weatherCondition.toLowerCase().contains('fog') ||
-            weatherCondition.toLowerCase().contains('windy') ||
-            weatherCondition.toLowerCase().contains('extreme heat') ||
-            weatherCondition.toLowerCase().contains('extreme cold');
 
-        if (badWeatherPredicted) {
-          enqueueWeatherAlert(appointmentType, date, weatherCondition, documentId);
+        // Get the forecast for the specified date
+        String forecastDate = DateFormat('yyyy-MM-dd').format(date);
+        var forecast = data['forecast']['forecastday'].firstWhere(
+              (day) => day['date'] == forecastDate,
+          orElse: () => null,
+        );
+
+        if (forecast != null) {
+          String weatherCondition = forecast['day']['condition']['text'];
+          bool badWeatherPredicted =  weatherCondition.toLowerCase().contains('rain') ||
+                                      weatherCondition.toLowerCase().contains('thunderstorm') ||
+                                      weatherCondition.toLowerCase().contains('snow') ||
+                                      weatherCondition.toLowerCase().contains('sunny') ||
+                                      weatherCondition.toLowerCase().contains('mist') ||
+                                      weatherCondition.toLowerCase().contains('fog') ||
+                                      weatherCondition.toLowerCase().contains('windy') ||
+                                      weatherCondition.toLowerCase().contains('extreme heat') ||
+                                      weatherCondition.toLowerCase().contains('extreme cold');
+
+          if (badWeatherPredicted) {
+            enqueueWeatherAlert(appointmentType, date, weatherCondition, documentId);
+          }
+        } else {
+          log("No forecast data available for the specified date.");
         }
       } else {
         throw Exception('Failed to load weather data with status: ${response.statusCode}');
