@@ -78,16 +78,17 @@ class _EventPageState extends State<EventPage> {
     return currentUser?.uid ?? '';
   }
 
-  // Check weather for a specific date
+  //Mo check sa weather condition sa specific date
   Future<void> checkWeatherForEvent(String appointmentType, DateTime date, String documentId) async {
-    String apiKey = '8f3a453d50754f8180720342240111'; // Add your API key here
+    //API key sa tomorrow.io
+    String apiKey = '8f3a453d50754f8180720342240111';
     String formattedDate = '${date.year}-${date.month}-${date.day}';
     String url = 'https://api.weatherapi.com/v1/forecast.json?key=$apiKey&q=Tagum City,Davao del Norte&days=1&dt=$formattedDate';
-
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
+        log("Weather API Response: $data");
         String weatherCondition = data['forecast']['forecastday'][0]['day']['condition']['text'];
         bool badWeatherPredicted = weatherCondition.toLowerCase().contains('rain') ||
             weatherCondition.toLowerCase().contains('thunderstorm') ||
@@ -100,7 +101,7 @@ class _EventPageState extends State<EventPage> {
             weatherCondition.toLowerCase().contains('extreme cold');
 
         if (badWeatherPredicted) {
-          enqueueWeatherAlert(appointmentType, date, weatherCondition, documentId); // Pass the document ID
+          enqueueWeatherAlert(appointmentType, date, weatherCondition, documentId);
         }
       } else {
         throw Exception('Failed to load weather data with status: ${response.statusCode}');
@@ -110,28 +111,31 @@ class _EventPageState extends State<EventPage> {
     }
   }
 
+  //Ibutang sa Queue and mga dialog para dli magsabay og show
   void enqueueWeatherAlert(String appointmentType, DateTime date, String weatherCondition, String documentId) {
     String formattedDate = DateFormat('MMMM d, y').format(date);
     String alertMessage = 'Your $appointmentType on $formattedDate may be affected by $weatherCondition. Consider rescheduling your event.';
 
     weatherAlertsQueue.add(alertMessage);
     if (!isAlertShowing) {
-      showNextWeatherAlert(documentId, date); // Pass documentId and date
+      showNextWeatherAlert(documentId, date);
     }
   }
 
+  //dri gi store ang next sa queue na dialog
   Future<void> showNextWeatherAlert(String documentId, DateTime date) async {
     if (weatherAlertsQueue.isNotEmpty && !isNavigatingToEditEvent) {
       isAlertShowing = true;
       String alertMessage = weatherAlertsQueue.removeAt(0);
       await showWeatherAlertDialog(alertMessage, documentId, date);
-      await Future.delayed(Duration(milliseconds: 100)); // Small delay between alerts
-      await showNextWeatherAlert(documentId, date); // Show the next alert
+      await Future.delayed(Duration(milliseconds: 100));
+      await showNextWeatherAlert(documentId, date);
     } else {
       isAlertShowing = false;
     }
   }
 
+  //alert Dialog
   Future<void> showWeatherAlertDialog(String alertMessage, String documentId, DateTime date) {
     return showDialog(
       context: context,
@@ -158,15 +162,14 @@ class _EventPageState extends State<EventPage> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Close the alert dialog
+                Navigator.pop(context);
               },
               child: Text('Dismiss', style: TextStyle(color: Colors.red)),
             ),
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Close the alert dialog
-                isNavigatingToEditEvent = true; // Set the flag to true
-                // Navigate to the EditEvent page after the dialog is closed
+                Navigator.pop(context);
+                isNavigatingToEditEvent = true; // ma dismiss ang mga previous dialog sa queue
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -215,7 +218,7 @@ class _EventPageState extends State<EventPage> {
     return appointments;
   }
 
-  // Check if appointment is completed (occurred before current date)
+
   bool isAppointmentCompleted(DateTime eventDate) {
     return eventDate.isBefore(DateTime.now().subtract(Duration(days: 1)));
   }
