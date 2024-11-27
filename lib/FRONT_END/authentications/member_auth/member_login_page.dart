@@ -10,6 +10,7 @@ import 'package:bethel_app_final/FRONT_END/authentications/auth_classes/my_textf
 import 'package:bethel_app_final/FRONT_END/authentications/forgot_password.dart';
 import 'package:bethel_app_final/FRONT_END/constant/color.dart';
 import 'package:get/get.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class MemberLoginPage extends StatefulWidget {
   final void Function()? onTap;
@@ -40,7 +41,7 @@ class _MemberLoginPageState extends State<MemberLoginPage> {
       ),
     );
   }
-//ssssssssssss
+
   void signUserIn() async {
     try {
       setState(() {
@@ -61,13 +62,15 @@ class _MemberLoginPageState extends State<MemberLoginPage> {
 
         showDialog(
           context: context,
-          barrierDismissible: true,
+          barrierDismissible: false,
           builder: (BuildContext context) {
-            return const AlertDialog(
-              content: SizedBox(
-                height: 50,
-                child: Center(
-                  child: CircularProgressIndicator(),
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              child: Center(
+                child: LoadingAnimationWidget.staggeredDotsWave(
+                  color: Colors.blueAccent,
+                  size: 50,
                 ),
               ),
             );
