@@ -82,8 +82,7 @@ class _EventPageState extends State<EventPage> {
   Future<void> checkWeatherForEvent(String appointmentType, DateTime date, String documentId) async {
     String apiKey = '8f3a453d50754f8180720342240111';
     String formattedDate = '${date.year}-${date.month}-${date.day}';
-    String Location = 'Tagum City,Davao del Norte';
-    String url = 'https://api.weatherapi.com/v1/forecast.json?key=$apiKey&q=$Location&days=7&dt=$formattedDate';
+    String url = 'https://api.weatherapi.com/v1/forecast.json?key=$apiKey&q=Tagum City,Davao del Norte&days=7&dt=$formattedDate';
 
     try {
       final response = await http.get(Uri.parse(url));
