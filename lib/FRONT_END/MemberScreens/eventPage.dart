@@ -7,6 +7,7 @@ import 'package:bethel_app_final/FRONT_END/constant/color.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class EventPage extends StatefulWidget {
   const EventPage({Key? key}) : super(key: key);
@@ -104,11 +105,13 @@ class _EventPageState extends State<EventPage> {
   }
   @override
   Widget build(BuildContext context) {
-    if (_pendingAppointmentsStream == null ||
-        _approvedAppointmentsStream == null) {
-      return const Scaffold(
+    if (_pendingAppointmentsStream == null || _approvedAppointmentsStream == null) {
+      return Scaffold(
         body: Center(
-          child: CircularProgressIndicator(),
+          child: LoadingAnimationWidget.staggeredDotsWave(
+            color: Colors.green,
+            size: 50,
+          ),
         ),
       );
     }
