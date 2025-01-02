@@ -1,10 +1,9 @@
 import 'dart:developer';
 import 'package:bethel_app_final/BACK_END/Services/Functions/Users.dart';
 import 'package:bethel_app_final/FRONT_END/authentications/auth_classes/error_indicator.dart';
-import 'package:bethel_app_final/FRONT_END/constant/color.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:lottie/lottie.dart';
+import 'package:intl/intl.dart';
 
 class AdminApproval extends StatefulWidget {
   const AdminApproval({Key? key}) : super(key: key);
@@ -21,6 +20,31 @@ class _AdminApprovalState extends State<AdminApproval> {
   bool sortByDay = false;
   int clickCount = 0;
 
+
+  final Map<String, int> appointmentPriorities = {
+
+    'Meeting': 5,
+    'Conference': 7,
+    'Seminar': 6,
+    'Workshop': 6,
+    'Webinar': 5,
+    'Wedding Ceremony': 10,
+    'Funeral Service': 9,
+    'Pastoral Visit': 7,
+    'Prayer Meeting': 6,
+    'Church Anniversary': 8,
+    'Choir Practice': 5,
+    'Youth Fellowship': 6,
+    'Counseling Session': 7,
+    'Community Outreach': 8,
+    'Infant Dedication': 8,
+    'Birthday Service': 4,
+    'Birthday Manyanita': 4,
+    'Membership Certificate': 3,
+    'Baptismal Certificate': 3,
+
+  };
+
   @override
   void initState() {
     super.initState();
@@ -36,28 +60,25 @@ class _AdminApprovalState extends State<AdminApproval> {
     }
   }
 
-  Future<void> _performApprovedAppointment(String appointmentId, String userID) async {
+  Future<void> _performApprovedAppointment(String appointmentId,
+      String userID) async {
     try {
-      // Call the method to approve the appointment
       await userStorage.approvedAppointment(userID, appointmentId);
-      // Add any additional logic here
     } catch (e) {
       log("Error performing approved appointment: $e");
       throw Exception("Error performing approved appointment.");
     }
   }
 
-  Future<void> _performDenyAppointment(String appointmentId, String userID) async {
+  Future<void> _performDenyAppointment(String appointmentId,
+      String userID) async {
     try {
-      // Call the method to deny the appointment
       await userStorage.denyAppointment(userID, appointmentId);
-      // Add any additional logic here
     } catch (e) {
       log("Error performing denied appointment: $e");
       throw Exception("Error performing denied appointment.");
     }
   }
-
 
   Future<void> approvedAppointment(String appointmentId, String userID) async {
     try {
@@ -67,9 +88,6 @@ class _AdminApprovalState extends State<AdminApproval> {
     } catch (e) {
       log("Error approving appointment: $e");
       DialogHelper.showSnackBar(context, "Error approving appointment.");
-    } finally {
-      Future.delayed(const Duration(seconds: 1)).then((_) {
-      });
     }
   }
 
@@ -81,15 +99,9 @@ class _AdminApprovalState extends State<AdminApproval> {
     } catch (e) {
       log("Error denying appointment: $e");
       DialogHelper.showSnackBar(context, "Error denying appointment.");
-    } finally {
-      Future.delayed(const Duration(seconds: 1)).then((_) {
-      });
     }
   }
 
-
-
-  // Method to sort appointments by month
   List<DocumentSnapshot> sortAppointmentsByMonth(QuerySnapshot snapshot) {
     List<DocumentSnapshot> appointments = snapshot.docs;
     if (sortByMonth) {
@@ -102,13 +114,33 @@ class _AdminApprovalState extends State<AdminApproval> {
     return appointments;
   }
 
-  List<DocumentSnapshot> sortAppointmentsEventsByDay(List<DocumentSnapshot> appointments) {
+  List<DocumentSnapshot> sortAppointmentsEventsByDay(
+      List<DocumentSnapshot> appointments) {
     appointments.sort((a, b) {
       DateTime dateA = (a.data() as Map<String, dynamic>)["date"].toDate();
       DateTime dateB = (b.data() as Map<String, dynamic>)["date"].toDate();
       return dateA.day.compareTo(dateB.day);
     });
     return appointments;
+  }
+
+// Group appointments by date
+  Map<String, List<DocumentSnapshot>> groupAppointmentsByDate(
+      List<DocumentSnapshot> appointments) {
+    Map<String, List<DocumentSnapshot>> groupedAppointments = {};
+
+    for (var appointment in appointments) {
+      Map<String, dynamic> data = appointment.data() as Map<String, dynamic>;
+      Timestamp timeStamp = data['date'];
+      DateTime dateTime = timeStamp.toDate();
+      String formattedDate = DateFormat('yyyy-MM-dd').format(dateTime);
+
+      if (!groupedAppointments.containsKey(formattedDate)) {
+        groupedAppointments[formattedDate] = [];
+      }
+      groupedAppointments[formattedDate]!.add(appointment);
+    }
+    return groupedAppointments;
   }
 
 
@@ -180,8 +212,98 @@ class _AdminApprovalState extends State<AdminApproval> {
                       ),
                     );
                   }
-                  List<DocumentSnapshot> sortedAppointments =
-                  sortAppointmentsByMonth(snapshot.data!);
+                  // Sort appointments by month
+                  List<
+                      DocumentSnapshot> sortedAppointments = sortAppointmentsByMonth(
+                      snapshot.data!);
+                  // Sort appointments by priority
+                  // Sort appointments by priority using the priorities map and date
+                  List<DocumentSnapshot> sortAppointmentsByPriority(
+                      List<DocumentSnapshot> appointments) {
+                    appointments.sort((a, b) {
+                      Map<String, dynamic> dataA = a.data() as Map<
+                          String,
+                          dynamic>;
+                      Map<String, dynamic> dataB = b.data() as Map<
+                          String,
+                          dynamic>;
+
+                      String appointmentTypeA = dataA['appointmenttype'] ?? '';
+                      String appointmentTypeB = dataB['appointmenttype'] ?? '';
+
+                      int priorityA = appointmentPriorities[appointmentTypeA] ??
+                          100; // Default low priority
+                      int priorityB = appointmentPriorities[appointmentTypeB] ??
+                          100;
+
+                      // If priorities are the same, compare by date
+                      if (priorityA == priorityB) {
+                        DateTime dateA = dataA['date'].toDate();
+                        DateTime dateB = dataB['date'].toDate();
+                        return dateA.compareTo(dateB);
+                      }
+
+                      // Higher priority should come first
+                      return priorityB.compareTo(priorityA);
+                    });
+                    return appointments;
+                  }
+
+// Re-prioritize and refresh the appointments
+                  void refreshAppointments() {
+                    setState(() {
+                      _initializeStream(); // Re-fetch appointments
+                    });
+                  }
+
+                  Future<void> handleAppointmentAction(String appointmentId,
+                      String userID, bool isApprove) async {
+                    try {
+                      String actionMessage = isApprove
+                          ? "Approving appointment..."
+                          : "Denying appointment...";
+                      await DialogHelper.showLoadingDialog(
+                          context, actionMessage);
+
+                      if (isApprove) {
+                        await _performApprovedAppointment(
+                            appointmentId, userID);
+                        DialogHelper.showSnackBar(
+                            context, "Appointment successfully approved.");
+                      } else {
+                        await _performDenyAppointment(appointmentId, userID);
+                        DialogHelper.showSnackBar(
+                            context, "Appointment successfully denied.");
+                      }
+
+                      // Refresh the priority list after an action
+                      refreshAppointments();
+                    } catch (e) {
+                      String errorMessage = isApprove
+                          ? "Error approving appointment."
+                          : "Error denying appointment.";
+                      log("$errorMessage: $e");
+                      DialogHelper.showSnackBar(context, errorMessage);
+                    }
+                  }
+
+
+                  // Group appointments by date
+                  Map<String, List<DocumentSnapshot>> groupedAppointments = groupAppointmentsByDate(sortedAppointments);
+
+                  Map<String, int> highestPriorityByDate = {};
+
+                  groupedAppointments.forEach((dateKey, appointments) {
+                    int highestPriority = appointments.map((doc) {
+                      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+                      String appointmentType = data['appointmenttype'] ?? '';
+                      return appointmentPriorities[appointmentType] ?? 100;
+                    }).reduce((a, b) => a > b ? a : b);
+
+                    highestPriorityByDate[dateKey] = highestPriority;
+                  });
+
+
                   return ListView(
                     children: [
                       const Padding(
@@ -194,208 +316,79 @@ class _AdminApprovalState extends State<AdminApproval> {
                           ),
                         ),
                       ),
-                      ...sortedAppointments.map((DocumentSnapshot document) {
-                        final id = document.id;
-                        Map<String, dynamic> data =
-                        document.data() as Map<String, dynamic>;
-                        Timestamp timeStamp = data["date"];
-                        DateTime dateTime = timeStamp.toDate();
-                        List<String> months = [
-                          "January",
-                          "February",
-                          "March",
-                          "April",
-                          "May",
-                          "June",
-                          "July",
-                          "August",
-                          "September",
-                          "October",
-                          "November",
-                          "December"
-                        ];
-                        String formattedDate =
-                            "${months[dateTime.month - 1]} ${dateTime.day}, ${dateTime.year}";
-                        return Card(
-                          color: Colors.amber.shade200,
-                          elevation: 2,
-                          margin: const EdgeInsets.symmetric(
-                              vertical: 8, horizontal: 4),
-                          child: ListTile(
-                            title: Text(
-                              'Appointment: ${data['appointmenttype'] ?? ''}',
+                      ...groupedAppointments.entries.map((entry) {
+                        String dateKey = entry.key;
+                        List<DocumentSnapshot> appointments = entry.value;
+
+                        appointments = sortAppointmentsByPriority(appointments);
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4.0),
+                              child: Text(
+                                'Date: $dateKey',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
                             ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Description: ${data['description'] ?? ''}',
-                                ),
-                                Text(
-                                  'Date: $formattedDate',
-                                ),
-                                Text(
-                                  'name: ${data['name'] ?? ''}',
-                                ),
-                                Text(
-                                  'email: ${data['email'] ?? ''}',
-                                ),
-                              ],
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: SizedBox(
-                                    height: 40, // Adjust size as needed
-                                    width: 40,
-                                    child: Lottie.asset(
-                                      'assets/animations/AnimationSuggestion1.json',
-                                      repeat: true,
-                                      animate: true,
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    // Show a message that says "This appointment is priority"
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: const Text(
-                                          "This appointment is priority",
-                                          style: TextStyle(fontSize: 16),
-                                        ),
-                                        duration: const Duration(seconds: 2),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.info_outline),
-                                  onPressed: () {
-                                    setState(() {
-                                      showOptionsMap[id] =
-                                      !(showOptionsMap[id] ?? false);
-                                    });
-                                  },
-                                ),
-                                if (showOptionsMap[id] ?? false)
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade200,
-                                      borderRadius: BorderRadius.circular(8.0),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        IconButton(
-                                          icon: const Icon(
-                                            Icons.check,
-                                            color: appGreen,
-                                            size: 24.0,
+                            ...appointments.map((DocumentSnapshot document) {
+                              Map<String, dynamic> data = document.data() as Map<String, dynamic>;
+
+                              String appointmentType = data['appointmenttype'] ?? '';
+                              int appointmentPriority = appointmentPriorities[appointmentType] ?? 100;
+
+                              bool isHighestPriority = appointmentPriority == highestPriorityByDate[dateKey];
+
+                              return Card(
+                                color: Colors.amber.shade100,
+                                elevation: 2,
+                                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                child: ListTile(
+                                  title: Row(
+                                    children: [
+                                      Expanded(child: Text('Appointment: ${data['appointmenttype'] ?? ''}')),
+                                      if (isHighestPriority)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red,
+                                            borderRadius: BorderRadius.circular(12),
                                           ),
-                                          onPressed: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (BuildContext context) {
-                                                return AlertDialog(
-                                                  title:
-                                                  const Text("Confirm Approval"),
-                                                  content: const Text(
-                                                      "Are you sure you want to approve this request?"),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                      },
-                                                      child:
-                                                      const Text("Cancel"),
-                                                    ),
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        String appointmentId =
-                                                            id; // Get the appointmentId from the document
-                                                        String userID =
-                                                        data['userID']; // Get the userID from the document
-                                                        if (appointmentId
-                                                            .isNotEmpty &&
-                                                            userID.isNotEmpty) {
-                                                          approvedAppointment(
-                                                              userID,
-                                                              appointmentId);
-                                                          Navigator.of(context)
-                                                              .pop(); // Close the dialog
-                                                        } else {
-                                                          // Handle case where either appointmentId or userID is empty
-                                                        }
-                                                      },
-                                                      child: const Text(
-                                                          "Approve",
-                                                          style: TextStyle(
-                                                              color: appGreen)),
-                                                    ),
-                                                  ],
-                                                );
-                                              },
-                                            );
-                                          },
+                                          child: Text(
+                                            'High Priority',
+                                            style: TextStyle(color: Colors.white, fontSize: 12),
+                                          ),
                                         ),
-                                        const SizedBox(width: 8.0),
-                                        IconButton(
-                                          icon: const Icon(Icons.close,
-                                              color: Colors.red, size: 24.0),
-                                          onPressed: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (BuildContext context) {
-                                                return AlertDialog(
-                                                  title:
-                                                  const Text("Confirm Deny"),
-                                                  content: const Text(
-                                                      "Are you sure you want to deny this request?"),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                      },
-                                                      child:
-                                                      const Text("Cancel"),
-                                                    ),
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        String appointmentId =
-                                                            id; // Get the appointmentId from the document
-                                                        String userID =
-                                                        data['userID']; // Get the userID from the document
-                                                        if (appointmentId
-                                                            .isNotEmpty &&
-                                                            userID.isNotEmpty) {
-                                                          denyAppointment(
-                                                              userID,
-                                                              appointmentId);
-                                                          Navigator.of(context)
-                                                              .pop(); // Close the dialog
-                                                        } else {
-                                                          // Handle case where either appointmentId or userID is empty
-                                                        }
-                                                      },
-                                                      child: const Text("Deny",
-                                                          style: TextStyle(
-                                                              color: appRed)),
-                                                    ),
-                                                  ],
-                                                );
-                                              },
-                                            );
-                                          },
-                                        ),
-                                      ],
-                                    ),
+                                    ],
                                   ),
-                              ],
-                            ),
-                          ),
+                                  subtitle: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Description: ${data['description'] ?? ''}'),
+                                      Text('Name: ${data['name'] ?? ''}'),
+                                      Text('Email: ${data['email'] ?? ''}'),
+                                    ],
+                                  ),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.check, color: Colors.green),
+                                        onPressed: () => handleAppointmentAction(document.id, data['userID'], true),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.close, color: Colors.red),
+                                        onPressed: () => handleAppointmentAction(document.id, data['userID'], false),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ],
                         );
+
                       }).toList(),
                     ],
                   );
