@@ -256,34 +256,53 @@ class _AdminApprovalState extends State<AdminApproval> {
                     });
                   }
 
-                  Future<void> handleAppointmentAction(String appointmentId,
-                      String userID, bool isApprove) async {
-                    try {
-                      String actionMessage = isApprove
-                          ? "Approving appointment..."
-                          : "Denying appointment...";
-                      await DialogHelper.showLoadingDialog(
-                          context, actionMessage);
+                  Future<void> handleAppointmentAction(
+                      String appointmentId, String userID, bool isApprove) async {
+                    String action = isApprove ? "approve" : "deny";
+                    bool? confirmation = await showDialog<bool>(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text("Confirm Action"),
+                          content: Text("Are you sure you want to $action this appointment?"),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false), // Cancel
+                              child: Text("Cancel"),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(true), // Confirm
+                              child: Text("Confirm"),
+                            ),
+                          ],
+                        );
+                      },
+                    );
 
-                      if (isApprove) {
-                        await _performApprovedAppointment(
-                            appointmentId, userID);
-                        DialogHelper.showSnackBar(
-                            context, "Appointment successfully approved.");
-                      } else {
-                        await _performDenyAppointment(appointmentId, userID);
-                        DialogHelper.showSnackBar(
-                            context, "Appointment successfully denied.");
+                    if (confirmation == true) {
+                      try {
+                        String actionMessage = isApprove
+                            ? "Approving appointment..."
+                            : "Denying appointment...";
+                        await DialogHelper.showLoadingDialog(context, actionMessage);
+
+                        if (isApprove) {
+                          await _performApprovedAppointment(appointmentId, userID);
+                          DialogHelper.showSnackBar(context, "Appointment successfully approved.");
+                        } else {
+                          await _performDenyAppointment(appointmentId, userID);
+                          DialogHelper.showSnackBar(context, "Appointment successfully denied.");
+                        }
+
+                        // Refresh the priority list after an action
+                        refreshAppointments();
+                      } catch (e) {
+                        String errorMessage = isApprove
+                            ? "Error approving appointment."
+                            : "Error denying appointment.";
+                        log("$errorMessage: $e");
+                        DialogHelper.showSnackBar(context, errorMessage);
                       }
-
-                      // Refresh the priority list after an action
-                      refreshAppointments();
-                    } catch (e) {
-                      String errorMessage = isApprove
-                          ? "Error approving appointment."
-                          : "Error denying appointment.";
-                      log("$errorMessage: $e");
-                      DialogHelper.showSnackBar(context, errorMessage);
                     }
                   }
 
@@ -347,7 +366,25 @@ class _AdminApprovalState extends State<AdminApproval> {
                                 child: ListTile(
                                   title: Row(
                                     children: [
-                                      Expanded(child: Text('Appointment: ${data['appointmenttype'] ?? ''}')),
+                                      // Left Section (Icon or Status Indicator)
+                                      CircleAvatar(
+                                        backgroundColor: Colors.greenAccent.shade100,
+                                        child: Icon(
+                                          Icons.event_available,
+                                          color: Colors.green.shade800,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      // Middle Section (Details)
+                                      Text(
+                                        data['appointmenttype'] ?? 'Unknown Type',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 5),
+                                      const SizedBox(width: 21),
                                       if (isHighestPriority)
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
@@ -365,9 +402,15 @@ class _AdminApprovalState extends State<AdminApproval> {
                                   subtitle: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text('Description: ${data['description'] ?? ''}'),
-                                      Text('Name: ${data['name'] ?? ''}'),
+                                      Text(
+                                        "Requested by: ${data['name'] ?? 'N/A'}",
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
                                       Text('Email: ${data['email'] ?? ''}'),
+                                      Text('Description: ${data['description'] ?? ''}'),
                                     ],
                                   ),
                                   trailing: Row(
