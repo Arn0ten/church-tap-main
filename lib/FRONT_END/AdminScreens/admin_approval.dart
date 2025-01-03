@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
+
 class AdminApproval extends StatefulWidget {
   const AdminApproval({Key? key}) : super(key: key);
 
@@ -19,7 +20,6 @@ class _AdminApprovalState extends State<AdminApproval> {
   bool sortByMonth = false;
   bool sortByDay = false;
   int clickCount = 0;
-
 
   final Map<String, int> appointmentPriorities = {
 
@@ -53,15 +53,14 @@ class _AdminApprovalState extends State<AdminApproval> {
 
   Future<void> _initializeStream() async {
     try {
-      _pendingAppointmentsStream =
-          UserStorage().fetchAllPendingAppointments();
+      _pendingAppointmentsStream = UserStorage().fetchAllPendingAppointments();
     } catch (e) {
       log("Error initializing stream: $e");
     }
   }
 
-  Future<void> _performApprovedAppointment(String appointmentId,
-      String userID) async {
+  Future<void> _performApprovedAppointment(
+      String appointmentId, String userID) async {
     try {
       await userStorage.approvedAppointment(userID, appointmentId);
     } catch (e) {
@@ -70,8 +69,8 @@ class _AdminApprovalState extends State<AdminApproval> {
     }
   }
 
-  Future<void> _performDenyAppointment(String appointmentId,
-      String userID) async {
+  Future<void> _performDenyAppointment(
+      String appointmentId, String userID) async {
     try {
       await userStorage.denyAppointment(userID, appointmentId);
     } catch (e) {
@@ -143,7 +142,6 @@ class _AdminApprovalState extends State<AdminApproval> {
     return groupedAppointments;
   }
 
-
   @override
   Widget build(BuildContext context) {
     if (_pendingAppointmentsStream == null) {
@@ -213,28 +211,25 @@ class _AdminApprovalState extends State<AdminApproval> {
                     );
                   }
                   // Sort appointments by month
-                  List<
-                      DocumentSnapshot> sortedAppointments = sortAppointmentsByMonth(
-                      snapshot.data!);
+                  List<DocumentSnapshot> sortedAppointments =
+                      sortAppointmentsByMonth(snapshot.data!);
                   // Sort appointments by priority
                   // Sort appointments by priority using the priorities map and date
                   List<DocumentSnapshot> sortAppointmentsByPriority(
                       List<DocumentSnapshot> appointments) {
                     appointments.sort((a, b) {
-                      Map<String, dynamic> dataA = a.data() as Map<
-                          String,
-                          dynamic>;
-                      Map<String, dynamic> dataB = b.data() as Map<
-                          String,
-                          dynamic>;
+                      Map<String, dynamic> dataA =
+                          a.data() as Map<String, dynamic>;
+                      Map<String, dynamic> dataB =
+                          b.data() as Map<String, dynamic>;
 
                       String appointmentTypeA = dataA['appointmenttype'] ?? '';
                       String appointmentTypeB = dataB['appointmenttype'] ?? '';
 
                       int priorityA = appointmentPriorities[appointmentTypeA] ??
                           100; // Default low priority
-                      int priorityB = appointmentPriorities[appointmentTypeB] ??
-                          100;
+                      int priorityB =
+                          appointmentPriorities[appointmentTypeB] ?? 100;
 
                       // If priorities are the same, compare by date
                       if (priorityA == priorityB) {
@@ -256,22 +251,25 @@ class _AdminApprovalState extends State<AdminApproval> {
                     });
                   }
 
-                  Future<void> handleAppointmentAction(
-                      String appointmentId, String userID, bool isApprove) async {
+                  Future<void> handleAppointmentAction(String appointmentId,
+                      String userID, bool isApprove) async {
                     String action = isApprove ? "approve" : "deny";
                     bool? confirmation = await showDialog<bool>(
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
                           title: Text("Confirm Action"),
-                          content: Text("Are you sure you want to $action this appointment?"),
+                          content: Text(
+                              "Are you sure you want to $action this appointment?"),
                           actions: [
                             TextButton(
-                              onPressed: () => Navigator.of(context).pop(false), // Cancel
+                              onPressed: () => Navigator.of(context).pop(false),
+                              // Cancel
                               child: Text("Cancel"),
                             ),
                             TextButton(
-                              onPressed: () => Navigator.of(context).pop(true), // Confirm
+                              onPressed: () => Navigator.of(context).pop(true),
+                              // Confirm
                               child: Text("Confirm"),
                             ),
                           ],
@@ -284,14 +282,18 @@ class _AdminApprovalState extends State<AdminApproval> {
                         String actionMessage = isApprove
                             ? "Approving appointment..."
                             : "Denying appointment...";
-                        await DialogHelper.showLoadingDialog(context, actionMessage);
+                        await DialogHelper.showLoadingDialog(
+                            context, actionMessage);
 
                         if (isApprove) {
-                          await _performApprovedAppointment(appointmentId, userID);
-                          DialogHelper.showSnackBar(context, "Appointment successfully approved.");
+                          await _performApprovedAppointment(
+                              appointmentId, userID);
+                          DialogHelper.showSnackBar(
+                              context, "Appointment successfully approved.");
                         } else {
                           await _performDenyAppointment(appointmentId, userID);
-                          DialogHelper.showSnackBar(context, "Appointment successfully denied.");
+                          DialogHelper.showSnackBar(
+                              context, "Appointment successfully denied.");
                         }
 
                         // Refresh the priority list after an action
@@ -306,22 +308,22 @@ class _AdminApprovalState extends State<AdminApproval> {
                     }
                   }
 
-
                   // Group appointments by date
-                  Map<String, List<DocumentSnapshot>> groupedAppointments = groupAppointmentsByDate(sortedAppointments);
+                  Map<String, List<DocumentSnapshot>> groupedAppointments =
+                      groupAppointmentsByDate(sortedAppointments);
 
                   Map<String, int> highestPriorityByDate = {};
 
                   groupedAppointments.forEach((dateKey, appointments) {
                     int highestPriority = appointments.map((doc) {
-                      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+                      Map<String, dynamic> data =
+                          doc.data() as Map<String, dynamic>;
                       String appointmentType = data['appointmenttype'] ?? '';
                       return appointmentPriorities[appointmentType] ?? 100;
                     }).reduce((a, b) => a > b ? a : b);
 
                     highestPriorityByDate[dateKey] = highestPriority;
                   });
-
 
                   return ListView(
                     children: [
@@ -345,84 +347,171 @@ class _AdminApprovalState extends State<AdminApproval> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4.0),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 4.0),
                               child: Text(
                                 'Date: $dateKey',
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                             ),
                             ...appointments.map((DocumentSnapshot document) {
-                              Map<String, dynamic> data = document.data() as Map<String, dynamic>;
+                              Map<String, dynamic> data =
+                                  document.data() as Map<String, dynamic>;
 
-                              String appointmentType = data['appointmenttype'] ?? '';
-                              int appointmentPriority = appointmentPriorities[appointmentType] ?? 100;
+                              String appointmentType =
+                                  data['appointmenttype'] ?? '';
+                              int appointmentPriority =
+                                  appointmentPriorities[appointmentType] ?? 100;
 
-                              bool isHighestPriority = appointmentPriority == highestPriorityByDate[dateKey];
+                              bool isHighestPriority = appointmentPriority ==
+                                  highestPriorityByDate[dateKey];
+
+// Function to return an appropriate icon based on the appointment type
+                              Icon getAppointmentIcon(String appointmentType) {
+                                switch (appointmentType) {
+                                  case 'Meeting':
+                                  case 'Webinar':
+                                  case 'Choir Practice':
+                                    return Icon(Icons.people,
+                                        color: Colors.green.shade800);
+                                  case 'Conference':
+                                  case 'Pastoral Visit':
+                                    return Icon(Icons.business,
+                                        color: Colors.blue.shade800);
+                                  case 'Seminar':
+                                  case 'Workshop':
+                                  case 'Youth Fellowship':
+                                  case 'Counseling Session':
+                                    return Icon(Icons.school,
+                                        color: Colors.orange.shade800);
+                                  case 'Wedding Ceremony':
+                                    return Icon(Icons.favorite,
+                                        color: Colors.pink.shade800);
+                                  case 'Funeral Service':
+                                    return Icon(
+                                        Icons.sentiment_very_dissatisfied,
+                                        color: Colors.grey.shade800);
+                                  case 'Prayer Meeting':
+                                    return Icon(Icons.accessibility,
+                                        color: Colors.teal.shade800);
+                                  case 'Church Anniversary':
+                                  case 'Community Outreach':
+                                  case 'Infant Dedication':
+                                    return Icon(Icons.domain,
+                                        color: Colors.purple.shade800);
+                                  case 'Birthday Service':
+                                  case 'Birthday Manyanita':
+                                    return Icon(Icons.cake,
+                                        color: Colors.yellow.shade800);
+                                  case 'Membership Certificate':
+                                  case 'Baptismal Certificate':
+                                    return Icon(Icons.credit_card,
+                                        color: Colors.blueGrey.shade800);
+                                  default:
+                                    return Icon(Icons.event_available,
+                                        color: Colors.green.shade800);
+                                }
+                              }
 
                               return Card(
-                                color: Colors.amber.shade100,
-                                elevation: 2,
-                                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                color: Colors.amber.shade200,
+                                elevation: 5,
+                                margin: const EdgeInsets.symmetric(
+                                    vertical: 8, horizontal: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                                 child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      vertical: 12, horizontal: 16),
                                   title: Row(
                                     children: [
                                       // Left Section (Icon or Status Indicator)
                                       CircleAvatar(
-                                        backgroundColor: Colors.greenAccent.shade100,
-                                        child: Icon(
-                                          Icons.event_available,
-                                          color: Colors.green.shade800,
-                                        ),
+                                        radius: 24,
+                                        backgroundColor:
+                                        Colors.amber.shade300,
+                                        child: getAppointmentIcon(
+                                            data['appointmenttype'] ??
+                                                'Unknown Type'), // Dynamic icon
                                       ),
-                                      const SizedBox(width: 10),
+                                      const SizedBox(width: 16),
                                       // Middle Section (Details)
-                                      Text(
-                                        data['appointmenttype'] ?? 'Unknown Type',
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              data['appointmenttype'] ??
+                                                  'Unknown Type',
+                                              style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black87,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 5),
+                                            if (isHighestPriority)
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red,
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
+                                                ),
+                                                child: Text(
+                                                  'High Priority',
+                                                  style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 12),
+                                                ),
+                                              ),
+                                          ],
                                         ),
                                       ),
-                                      const SizedBox(height: 5),
-                                      const SizedBox(width: 21),
-                                      if (isHighestPriority)
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                                          decoration: BoxDecoration(
-                                            color: Colors.red,
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Text(
-                                            'High Priority',
-                                            style: TextStyle(color: Colors.white, fontSize: 12),
-                                          ),
-                                        ),
                                     ],
                                   ),
-                                  subtitle: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Requested by: ${data['name'] ?? 'N/A'}",
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey,
+                                  subtitle: Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Requested by: ${data['name'] ?? 'N/A'}",
+                                          style: const TextStyle(
+                                              fontSize: 14, color: Colors.grey),
                                         ),
-                                      ),
-                                      Text('Email: ${data['email'] ?? ''}'),
-                                      Text('Description: ${data['description'] ?? ''}'),
-                                    ],
+                                        const SizedBox(height: 4),
+                                        Text('Email: ${data['email'] ?? ''}'),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                            'Description: ${data['description'] ?? ''}'),
+                                      ],
+                                    ),
                                   ),
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       IconButton(
-                                        icon: const Icon(Icons.check, color: Colors.green),
-                                        onPressed: () => handleAppointmentAction(document.id, data['userID'], true),
+                                        icon: const Icon(Icons.check,
+                                            color: Colors.green, size: 30),
+                                        onPressed: () =>
+                                            handleAppointmentAction(document.id,
+                                                data['userID'], true),
                                       ),
+                                      const SizedBox(width: 8),
                                       IconButton(
-                                        icon: const Icon(Icons.close, color: Colors.red),
-                                        onPressed: () => handleAppointmentAction(document.id, data['userID'], false),
+                                        icon: const Icon(Icons.close,
+                                            color: Colors.red, size: 30),
+                                        onPressed: () =>
+                                            handleAppointmentAction(document.id,
+                                                data['userID'], false),
                                       ),
                                     ],
                                   ),
@@ -431,7 +520,6 @@ class _AdminApprovalState extends State<AdminApproval> {
                             }).toList(),
                           ],
                         );
-
                       }).toList(),
                     ],
                   );

@@ -55,6 +55,7 @@ dependencies:
 
   #Arn dependency Addition
   weather: ^3.1.1
+  font_awesome_flutter: ^10.1.0
 
 
 dev_dependencies:

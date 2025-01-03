@@ -348,7 +348,7 @@ class _EventPageState extends State<EventPage> {
                         String formattedDate =
                             "${months[dateTime.month - 1]} ${dateTime.day}, ${dateTime.year}";
                         return Card(
-                          color: Colors.amber.shade200,
+                            color: Colors.amber.shade200,
                           elevation: 2,
                           margin: const EdgeInsets.symmetric(
                               vertical: 8,

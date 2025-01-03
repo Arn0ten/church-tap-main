@@ -7,6 +7,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../authentications/option_to_loginform/option_what_account_to_use.dart';
+
 
 void signUserOut() {
   FirebaseAuth.instance.signOut();
@@ -260,7 +262,7 @@ class _ProfileState extends State<Profile> {
                     actions: [
                       TextButton(
                         onPressed: () {
-                          Navigator.of(context).pop();
+                          Navigator.of(context).pop(); // Close the dialog
                         },
                         child: const Text(
                           'No',
@@ -269,10 +271,15 @@ class _ProfileState extends State<Profile> {
                       ),
                       TextButton(
                         onPressed: () async {
-                          Navigator.of(context).pop();
+                          Navigator.of(context).pop(); // Close the dialog
                           try {
-                            await FirebaseAuth.instance.signOut();
-                            Get.back();
+                            await FirebaseAuth.instance.signOut(); // Perform sign out
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => OptionToPlatformToLogin(),
+                              ),
+                            ); // Navigate to OptionToPlatformToLogin page
                           } catch (e) {
                             print("Error signing out: $e");
                           }
@@ -311,6 +318,7 @@ class _ProfileState extends State<Profile> {
               ),
             ),
           ),
+
 
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 30),
