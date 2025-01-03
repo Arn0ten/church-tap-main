@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../authentications/option_to_loginform/option_what_account_to_use.dart';
+
 
 void signUserOut() {
   FirebaseAuth.instance.signOut();
@@ -199,7 +201,7 @@ class _AdminSettingsState extends State<AdminSettings> {
                     actions: [
                       TextButton(
                         onPressed: () {
-                          Navigator.of(context).pop();
+                          Navigator.of(context).pop(); // Close the dialog
                         },
                         child: const Text(
                           'No',
@@ -208,11 +210,15 @@ class _AdminSettingsState extends State<AdminSettings> {
                       ),
                       TextButton(
                         onPressed: () async {
-                          // Sign out of Firebase Authentication
-                          Navigator.of(context).pop();
+                          Navigator.of(context).pop(); // Close the dialog
                           try {
-                            await FirebaseAuth.instance.signOut();
-                            Get.back();
+                            await FirebaseAuth.instance.signOut(); // Perform Firebase sign-out
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => OptionToPlatformToLogin(),
+                              ),
+                            ); // Navigate to OptionToPlatformToLogin page
                           } catch (e) {
                             print("Error signing out: $e");
                           }
@@ -251,6 +257,7 @@ class _AdminSettingsState extends State<AdminSettings> {
               ),
             ),
           ),
+
 
 
           Container(
