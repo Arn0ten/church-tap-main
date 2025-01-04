@@ -8,6 +8,7 @@
   import 'package:flutter/cupertino.dart';
   import 'package:flutter/material.dart';
   import 'package:flutter/widgets.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
   
   class MemberHomePage extends StatefulWidget {
     const MemberHomePage({Key? key}) : super(key: key);
@@ -271,27 +272,121 @@
                                   ];
                                   String formattedDate =
                                       "${months[dateTime.month - 1]} ${dateTime.day}, ${dateTime.year}";
-  
+                                  // Function to return an appropriate icon based on the appointment type
+                                  Icon getAppointmentIcon(String appointmentType) {
+                                    switch (appointmentType) {
+                                    // Religious Services
+                                      case 'Sunday Service':
+                                      case 'Christmas Service':
+                                        return Icon(FontAwesomeIcons.church, color: Colors.pink.shade800);
+                                      case 'Easter Service':
+                                        return const Icon(FontAwesomeIcons.egg, color: Colors.white);
+
+                                    // Ceremonies
+                                      case 'Wedding Ceremony':
+                                        return Icon(FontAwesomeIcons.heart, color: Colors.red.shade800);
+                                      case 'Funeral Service':
+                                        return Icon(FontAwesomeIcons.skullCrossbones, color: Colors.grey.shade800);
+
+                                    // Baptism and Communion
+                                      case 'Baptism':
+                                      case 'Communion Service':
+                                      case 'Infant Dedication':
+                                        return Icon(FontAwesomeIcons.dove, color: Colors.grey.shade300);
+
+                                    // Visits and Missionary Work
+                                      case 'Pastoral Visit':
+                                      case 'Missionary Work':
+                                        return Icon(FontAwesomeIcons.businessTime, color: Colors.blue.shade800);
+
+                                    // Prayer and Fellowship
+                                      case 'Prayer Meeting':
+                                        return Icon(FontAwesomeIcons.handsPraying, color: Colors.teal.shade800);
+                                      case 'Youth Fellowship':
+                                      case 'Bible Study':
+                                        return Icon(FontAwesomeIcons.bookOpen, color: Colors.orange.shade800);
+
+                                    // Church and Community
+                                      case 'Church Anniversary':
+                                      case 'Community Outreach':
+                                        return Icon(FontAwesomeIcons.peopleCarryBox, color: Colors.purple.shade800);
+
+                                    // Music and Choir
+                                      case 'Choir Practice':
+                                        return Icon(FontAwesomeIcons.music, color: Colors.green.shade800);
+
+                                    // Meals and Socials
+                                      case 'Fellowship Meal':
+                                        return Icon(FontAwesomeIcons.utensils, color: Colors.brown.shade800);
+                                      case 'Anniversary Service':
+                                        return Icon(FontAwesomeIcons.cakeCandles, color: Colors.yellow.shade800);
+
+                                    // Certificates
+                                      case 'Membership Certificate':
+                                      case 'Baptismal Certificate':
+                                        return Icon(FontAwesomeIcons.idCard, color: Colors.blueGrey.shade800);
+
+                                    // Birthday Service
+                                      case 'Birthday Service':
+                                        return Icon(FontAwesomeIcons.cakeCandles, color: Colors.pink.shade600);
+
+                                    // Default event icon
+                                      default:
+                                        return Icon(FontAwesomeIcons.calendarDays, color: Colors.green.shade800);
+                                    }
+                                  }
                                   bool completed = isEventCompleted(event); // Check if event is completed
                                   Color cardColor = completed ? Colors.grey.shade200 : Colors.green.shade200; // Set color based on completion
   
                                   return Card(
-                                    color: cardColor,
+                                    color: Colors.green.shade200,
                                     elevation: 2,
                                     margin: const EdgeInsets.symmetric(
-                                      vertical: 8,
-                                      horizontal: 4,
-                                    ),
+                                        vertical: 8, horizontal: 4),
                                     child: ListTile(
-                                      title: Text(
-                                        'Event: ${event['appointmenttype'] ?? ''}',
-                                        style: const TextStyle(),
+                                      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                      title: Row(
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 24,
+                                            backgroundColor: Colors.green.shade300,
+                                            child: getAppointmentIcon(
+                                              event['appointmenttype'] ?? 'Unknown Type',
+                                            ),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  event['appointmenttype'] ?? 'Unknown Type',
+                                                  style: const TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.black87,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                       subtitle: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                         children: [
-                                          Text('Description: ${event['description'] ?? ''}'),
-                                          Text('Date: $formattedDate'),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Date: $formattedDate',
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Description: ${event['description'] ?? ''}',
+                                            style: const TextStyle(fontSize: 14, color: Colors.black87),
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 2,
+                                          ),
                                         ],
                                       ),
                                     ),
