@@ -89,12 +89,13 @@ class _MyProfileState extends State<MyProfile> {
                           const Icon(Icons.person),
                           const SizedBox(width: 10),
                           Text(
-                            'Name: ${tapAuth.auth.currentUser?.displayName}',
+                            'Name: ${tapAuth.auth.currentUser?.displayName ?? "No Name Provided"}',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+
                         ],
                       ),
                     ),
