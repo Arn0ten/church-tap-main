@@ -3,6 +3,7 @@ import 'package:bethel_app_final/BACK_END/Services/Functions/Users.dart';
 import 'package:bethel_app_final/FRONT_END/authentications/auth_classes/error_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 
 
@@ -21,28 +22,28 @@ class _AdminApprovalState extends State<AdminApproval> {
   bool sortByDay = false;
   int clickCount = 0;
 
-  final Map<String, int> appointmentPriorities = {
-
-    'Meeting': 5,
-    'Conference': 7,
-    'Seminar': 6,
-    'Workshop': 6,
-    'Webinar': 5,
-    'Wedding Ceremony': 10,
-    'Funeral Service': 9,
-    'Pastoral Visit': 7,
-    'Prayer Meeting': 6,
-    'Church Anniversary': 8,
-    'Choir Practice': 5,
-    'Youth Fellowship': 6,
-    'Counseling Session': 7,
-    'Community Outreach': 8,
-    'Infant Dedication': 8,
-    'Birthday Service': 4,
-    'Birthday Manyanita': 4,
-    'Membership Certificate': 3,
-    'Baptismal Certificate': 3,
-
+  final Map<String, double> appointmentPriorities = {
+    'Sunday Service': 10,
+    'Wedding Ceremony': 9.4,
+    'Funeral Service': 9.3,
+    'Christmas Service': 9.2,
+    'Easter Service': 9.1,
+    'Baptism': 8.4,
+    'Communion Service': 8.3,
+    'Church Anniversary': 8.2,
+    'Infant Dedication': 8.1,
+    'Pastoral Visit': 7.4,
+    'Prayer Meeting': 7.3,
+    'Community Outreach': 7.2,
+    'Missionary Work': 7.1,
+    'Youth Fellowship': 6.3,
+    'Bible Study': 6.2,
+    'Choir Practice': 6.1,
+    'Fellowship Meal': 5.2,
+    'Anniversary Service': 5.1,
+    'Baptismal Certificate': 5.1,
+    'Birthday Service': 4.2,
+    'Membership Certificate': 4.1
   };
 
   @override
@@ -226,9 +227,9 @@ class _AdminApprovalState extends State<AdminApproval> {
                       String appointmentTypeA = dataA['appointmenttype'] ?? '';
                       String appointmentTypeB = dataB['appointmenttype'] ?? '';
 
-                      int priorityA = appointmentPriorities[appointmentTypeA] ??
+                      double priorityA = appointmentPriorities[appointmentTypeA] ??
                           100; // Default low priority
-                      int priorityB =
+                      double priorityB =
                           appointmentPriorities[appointmentTypeB] ?? 100;
 
                       // If priorities are the same, compare by date
@@ -312,10 +313,10 @@ class _AdminApprovalState extends State<AdminApproval> {
                   Map<String, List<DocumentSnapshot>> groupedAppointments =
                       groupAppointmentsByDate(sortedAppointments);
 
-                  Map<String, int> highestPriorityByDate = {};
+                  Map<String, double> highestPriorityByDate = {};
 
                   groupedAppointments.forEach((dateKey, appointments) {
-                    int highestPriority = appointments.map((doc) {
+                    double highestPriority = appointments.map((doc) {
                       Map<String, dynamic> data =
                           doc.data() as Map<String, dynamic>;
                       String appointmentType = data['appointmenttype'] ?? '';
@@ -347,182 +348,297 @@ class _AdminApprovalState extends State<AdminApproval> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 4.0),
+                              padding: const EdgeInsets.symmetric(vertical: 4.0),
                               child: Text(
                                 'Date: $dateKey',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 16),
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                             ),
                             ...appointments.map((DocumentSnapshot document) {
-                              Map<String, dynamic> data =
-                                  document.data() as Map<String, dynamic>;
+                              Map<String, dynamic> data = document.data() as Map<String, dynamic>;
 
-                              String appointmentType =
-                                  data['appointmenttype'] ?? '';
-                              int appointmentPriority =
-                                  appointmentPriorities[appointmentType] ?? 100;
+                              String appointmentType = data['appointmenttype'] ?? '';
+                              double appointmentPriority = appointmentPriorities[appointmentType] ?? 100;
 
-                              bool isHighestPriority = appointmentPriority ==
-                                  highestPriorityByDate[dateKey];
+                              bool isHighestPriority = appointmentPriority == highestPriorityByDate[dateKey];
 
-// Function to return an appropriate icon based on the appointment type
+                              // Function to return an appropriate icon based on the appointment type
                               Icon getAppointmentIcon(String appointmentType) {
                                 switch (appointmentType) {
-                                  case 'Meeting':
-                                  case 'Webinar':
-                                  case 'Choir Practice':
-                                    return Icon(Icons.people,
-                                        color: Colors.green.shade800);
-                                  case 'Conference':
-                                  case 'Pastoral Visit':
-                                    return Icon(Icons.business,
-                                        color: Colors.blue.shade800);
-                                  case 'Seminar':
-                                  case 'Workshop':
-                                  case 'Youth Fellowship':
-                                  case 'Counseling Session':
-                                    return Icon(Icons.school,
-                                        color: Colors.orange.shade800);
+                                // Religious Services
+                                  case 'Sunday Service':
+                                  case 'Christmas Service':
+                                  return Icon(FontAwesomeIcons.church, color: Colors.pink.shade800);
+                                  case 'Easter Service':
+                                    return const Icon(FontAwesomeIcons.egg, color: Colors.white);
+
+                                // Ceremonies
                                   case 'Wedding Ceremony':
-                                    return Icon(Icons.favorite,
-                                        color: Colors.pink.shade800);
+                                    return Icon(FontAwesomeIcons.heart, color: Colors.red.shade800);
                                   case 'Funeral Service':
-                                    return Icon(
-                                        Icons.sentiment_very_dissatisfied,
-                                        color: Colors.grey.shade800);
+                                    return Icon(FontAwesomeIcons.skullCrossbones, color: Colors.grey.shade800);
+
+                                // Baptism and Communion
+                                  case 'Baptism':
+                                  case 'Communion Service':
+                                  case 'Infant Dedication':
+                                    return Icon(FontAwesomeIcons.dove, color: Colors.grey.shade300);
+
+                                // Visits and Missionary Work
+                                  case 'Pastoral Visit':
+                                  case 'Missionary Work':
+                                    return Icon(FontAwesomeIcons.businessTime, color: Colors.blue.shade800);
+
+                                // Prayer and Fellowship
                                   case 'Prayer Meeting':
-                                    return Icon(Icons.accessibility,
-                                        color: Colors.teal.shade800);
+                                    return Icon(FontAwesomeIcons.handsPraying, color: Colors.teal.shade800);
+                                  case 'Youth Fellowship':
+                                  case 'Bible Study':
+                                    return Icon(FontAwesomeIcons.bookOpen, color: Colors.orange.shade800);
+
+                                // Church and Community
                                   case 'Church Anniversary':
                                   case 'Community Outreach':
-                                  case 'Infant Dedication':
-                                    return Icon(Icons.domain,
-                                        color: Colors.purple.shade800);
-                                  case 'Birthday Service':
-                                  case 'Birthday Manyanita':
-                                    return Icon(Icons.cake,
-                                        color: Colors.yellow.shade800);
+                                    return Icon(FontAwesomeIcons.peopleCarryBox, color: Colors.purple.shade800);
+
+                                // Music and Choir
+                                  case 'Choir Practice':
+                                    return Icon(FontAwesomeIcons.music, color: Colors.green.shade800);
+
+                                // Meals and Socials
+                                  case 'Fellowship Meal':
+                                    return Icon(FontAwesomeIcons.utensils, color: Colors.brown.shade800);
+                                  case 'Anniversary Service':
+                                    return Icon(FontAwesomeIcons.cakeCandles, color: Colors.yellow.shade800);
+
+                                // Certificates
                                   case 'Membership Certificate':
                                   case 'Baptismal Certificate':
-                                    return Icon(Icons.credit_card,
-                                        color: Colors.blueGrey.shade800);
+                                    return Icon(FontAwesomeIcons.idCard, color: Colors.blueGrey.shade800);
+
+                                // Birthday Service
+                                  case 'Birthday Service':
+                                    return Icon(FontAwesomeIcons.cakeCandles, color: Colors.pink.shade600);
+
+                                // Default event icon
                                   default:
-                                    return Icon(Icons.event_available,
-                                        color: Colors.green.shade800);
+                                    return Icon(FontAwesomeIcons.calendarDays, color: Colors.green.shade800);
                                 }
                               }
 
-                              return Card(
-                                color: Colors.amber.shade200,
-                                elevation: 5,
-                                margin: const EdgeInsets.symmetric(
-                                    vertical: 8, horizontal: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(
-                                      vertical: 12, horizontal: 16),
-                                  title: Row(
-                                    children: [
-                                      // Left Section (Icon or Status Indicator)
-                                      CircleAvatar(
-                                        radius: 24,
-                                        backgroundColor:
-                                        Colors.amber.shade300,
-                                        child: getAppointmentIcon(
-                                            data['appointmenttype'] ??
-                                                'Unknown Type'), // Dynamic icon
-                                      ),
-                                      const SizedBox(width: 16),
-                                      // Middle Section (Details)
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              data['appointmenttype'] ??
-                                                  'Unknown Type',
-                                              style: const TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black87,
-                                              ),
+
+                              return Draggable<String>(
+                                data: document.id,
+                                feedback: Material(
+                                  color: Colors.transparent,
+                                  child: Card(
+                                    color: Colors.amber.shade200,
+                                    elevation: 5,
+                                    margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: ListTile(
+                                      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                      title: Row(
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 24,
+                                            backgroundColor: Colors.amber.shade300,
+                                            child: getAppointmentIcon(
+                                              data['appointmenttype'] ?? 'Unknown Type',
                                             ),
-                                            const SizedBox(height: 5),
-                                            if (isHighestPriority)
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 4),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.red,
-                                                  borderRadius:
-                                                      BorderRadius.circular(20),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  data['appointmenttype'] ?? 'Unknown Type',
+                                                  style: const TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.black87,
+                                                  ),
                                                 ),
-                                                child: Text(
-                                                  'High Priority',
-                                                  style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 12),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                childWhenDragging: Container(),
+                                child: GestureDetector(
+                                  onLongPress: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return Dialog(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(16.0),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Stack(
+                                                  children: [
+                                                    // Close button in the top-right corner
+                                                    Positioned(
+                                                      right: 0,
+                                                      top: 0,
+                                                      child: IconButton(
+                                                        icon: const Icon(Icons.close, color: Colors.black),
+                                                        onPressed: () {
+                                                          Navigator.of(context).pop(); // Close the dialog
+                                                        },
+                                                      ),
+                                                    ),
+                                                    // Content Section
+                                                    Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        Text(
+                                                          data['appointmenttype'] ?? 'Unknown Type',
+                                                          style: const TextStyle(
+                                                            fontSize: 20,
+                                                            fontWeight: FontWeight.bold,
+                                                            color: Colors.black87,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(height: 12),
+                                                        Text(
+                                                          'Email: ${data['email'] ?? ''}',
+                                                          style: const TextStyle(fontSize: 14, color: Colors.grey),
+                                                        ),
+                                                        const SizedBox(height: 8),
+                                                        Text(
+                                                          'Description: ${data['description'] ?? ''}',
+                                                          style: const TextStyle(fontSize: 14, color: Colors.black87)
+                                                        ),
+                                                        const SizedBox(height: 16),
+                                                        if (isHighestPriority)
+                                                          Container(
+                                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                            decoration: BoxDecoration(
+                                                              color: Colors.red,
+                                                              borderRadius: BorderRadius.circular(20),
+                                                            ),
+                                                            child: const Text(
+                                                              'High Priority',
+                                                              style: TextStyle(color: Colors.white, fontSize: 12),
+                                                            ),
+                                                          ),
+                                                      ],
+                                                    ),
+                                                  ],
                                                 ),
-                                              ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                  child: Card(
+                                    color: Colors.amber.shade200,
+                                    elevation: 5,
+                                    margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: ListTile(
+                                      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                      title: Row(
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 24,
+                                            backgroundColor: Colors.amber.shade300,
+                                            child: getAppointmentIcon(
+                                              data['appointmenttype'] ?? 'Unknown Type',
+                                            ),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  data['appointmenttype'] ?? 'Unknown Type',
+                                                  style: const TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.black87,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 5),
+                                                if (isHighestPriority)
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.red,
+                                                      borderRadius: BorderRadius.circular(20),
+                                                    ),
+                                                    child: const Text(
+                                                      'High Priority',
+                                                      style: TextStyle(color: Colors.white, fontSize: 12),
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      subtitle: Padding(
+                                        padding: const EdgeInsets.only(top: 8),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Email: ${data['email'] ?? ''}',
+                                              style: const TextStyle(fontSize: 14, color: Colors.grey),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Description: ${data['description'] ?? ''}',
+                                              style: const TextStyle(fontSize: 14, color: Colors.black87),
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 2,
+                                            ),
                                           ],
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                  subtitle: Padding(
-                                    padding: const EdgeInsets.only(top: 8),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Requested by: ${data['name'] ?? 'N/A'}",
-                                          style: const TextStyle(
-                                              fontSize: 14, color: Colors.grey),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text('Email: ${data['email'] ?? ''}'),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                            'Description: ${data['description'] ?? ''}'),
-                                      ],
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.check, color: Colors.green, size: 30),
+                                            onPressed: () => handleAppointmentAction(document.id, data['userID'], true),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          IconButton(
+                                            icon: const Icon(Icons.close, color: Colors.red, size: 30),
+                                            onPressed: () => handleAppointmentAction(document.id, data['userID'], false),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.check,
-                                            color: Colors.green, size: 30),
-                                        onPressed: () =>
-                                            handleAppointmentAction(document.id,
-                                                data['userID'], true),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      IconButton(
-                                        icon: const Icon(Icons.close,
-                                            color: Colors.red, size: 30),
-                                        onPressed: () =>
-                                            handleAppointmentAction(document.id,
-                                                data['userID'], false),
-                                      ),
-                                    ],
                                   ),
                                 ),
                               );
+
                             }).toList(),
                           ],
                         );
                       }).toList(),
                     ],
                   );
+
                 },
               ),
             ),
