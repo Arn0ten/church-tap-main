@@ -57,6 +57,8 @@ dependencies:
   weather: ^3.1.1
   font_awesome_flutter: ^10.8.0
   flutter_animated_icons: ^1.0.1
+  fuzzy: ^0.5.1
+
 
 
 dev_dependencies:
