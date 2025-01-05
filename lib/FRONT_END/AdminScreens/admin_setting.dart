@@ -33,7 +33,7 @@ class _AdminSettingsState extends State<AdminSettings> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: ListView(
-        padding: const EdgeInsets.only(top: 40, left: 20, right: 20),
+        padding: const EdgeInsets.only(top: 5, left: 20, right: 20),
 
         children: [
           Row(
@@ -62,7 +62,7 @@ class _AdminSettingsState extends State<AdminSettings> {
               const SizedBox(width: 50),
             ],
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 7),
           const Divider(
             color: appGreen,
           ),

@@ -6,6 +6,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 
+import '../constant/color.dart';
+
 
 class AdminApproval extends StatefulWidget {
   const AdminApproval({Key? key}) : super(key: key);
@@ -154,7 +156,7 @@ class _AdminApprovalState extends State<AdminApproval> {
     }
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.only(top: 40, left: 20, right: 20),
+        padding: const EdgeInsets.only(top: 5, left: 20, right: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -186,11 +188,10 @@ class _AdminApprovalState extends State<AdminApproval> {
                 const SizedBox(width: 50),
               ],
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 7),
             const Divider(
-              color: Colors.green,
+              color: appGreen,
             ),
-            const SizedBox(height: 10),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: _pendingAppointmentsStream,
@@ -434,7 +435,7 @@ class _AdminApprovalState extends State<AdminApproval> {
                                   child: Card(
                                     color: Colors.amber.shade200,
                                     elevation: 5,
-                                    margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                                    margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),

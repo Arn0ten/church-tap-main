@@ -18,7 +18,11 @@ class _AdminNavigationPageState extends State<AdminNavigationPage> {
   final List<Widget> _children = [
     const AdminHomePage(),
     const AdminApproval(),
-    const CustomCalendar(type: "admins"),
+    Navigator(
+      onGenerateRoute: (RouteSettings settings) {
+        return MaterialPageRoute(builder: (context) => const CustomCalendar(type: "admins"));
+      },
+    ),
     const AdminSettings(),
   ];
 
