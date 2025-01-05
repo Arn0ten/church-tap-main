@@ -34,16 +34,18 @@ class _AddAppointmentState extends State<AddAppointment> {
   late List<Map<String, dynamic>> _appointmentType;
   bool isCustomAppointment = false;
   final _customAppointmentController = TextEditingController();
+  late ValueNotifier<bool> isCustomAppointmentNotifier;
+
   @override
   void initState() {
     super.initState();
     _selectedDate = widget.selectedDate;
+    isCustomAppointmentNotifier = ValueNotifier<bool>(false);
     _fetchAppointmentTypes().then((types) {
       setState(() {
         _appointmentType = types;
-        _selectedAppointmentType = _appointmentType.isNotEmpty
-            ? _appointmentType.first['type']
-            : '';
+        _selectedAppointmentType =
+        _appointmentType.isNotEmpty ? _appointmentType.first['type'] : '';
       });
     });
   }
@@ -52,6 +54,7 @@ class _AddAppointmentState extends State<AddAppointment> {
   void dispose() {
     _descController.dispose();
     _customAppointmentController.dispose();
+    isCustomAppointmentNotifier.dispose();
     super.dispose();
   }
 
@@ -74,31 +77,36 @@ class _AddAppointmentState extends State<AddAppointment> {
     );
   }
 
-
-
   Widget _buildForm() {
     return ListView(
       padding: const EdgeInsets.all(16.0),
       children: [
-        TextFormField(
-          enabled: false,
-          readOnly: true,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            disabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.black),
-            ),
+// Date Picker
+        TextButton(
+          onPressed: () async {
+            final DateTime? pickedDate = await showDatePicker(
+              context: context,
+              initialDate: _selectedDate,
+              firstDate: DateTime(2000),
+              lastDate: DateTime(2100),
+            );
+            if (pickedDate != null && pickedDate != _selectedDate) {
+              setState(() {
+                _selectedDate = pickedDate;
+              });
+            }
+          },
+          child: Text(
+            "Selected Date: ${_selectedDate.month}/${_selectedDate.day}/${_selectedDate.year}",
+            style: TextStyle(fontSize: 16, color: Colors.black),
           ),
-          style: const TextStyle(color: Colors.black),
-          initialValue:
-          "${_selectedDate.month}/${_selectedDate.day}/${_selectedDate.year}",
         ),
         const SizedBox(height: 16.0),
         DropdownButtonFormField<String>(
           value: isCustomAppointment ? null : _selectedAppointmentType,
           onChanged: (String? newValue) {
             setState(() {
-              _selectedAppointmentType = newValue!;
+              _selectedAppointmentType = newValue ?? '';
               isCustomAppointment = false; // Reset custom appointment field
             });
           },
@@ -123,18 +131,35 @@ class _AddAppointmentState extends State<AddAppointment> {
               'Or enter custom appointment:',
               style: TextStyle(fontSize: 16),
             ),
-            Checkbox(
-              value: isCustomAppointment,
-              onChanged: (bool? value) {
-                setState(() {
-                  isCustomAppointment = value!;
-                  if (isCustomAppointment) {
-                    _selectedAppointmentType = ''; // Reset dropdown
-                  }
-                });
+            ValueListenableBuilder<bool>(
+              valueListenable: isCustomAppointmentNotifier,
+              builder: (context, isCustomAppointment, child) {
+                return Checkbox(
+                  value: isCustomAppointment,
+                  onChanged: (bool? value) {
+                    isCustomAppointmentNotifier.value = value ?? false;
+                    if (!isCustomAppointmentNotifier.value) {
+                      _customAppointmentController.clear();
+                    }
+                  },
+                );
               },
             ),
           ],
+        ),
+        ValueListenableBuilder<bool>(
+          valueListenable: isCustomAppointmentNotifier,
+          builder: (context, isCustomAppointment, child) {
+            return isCustomAppointment
+                ? TextField(
+              controller: _customAppointmentController,
+              decoration: const InputDecoration(
+                labelText: 'Custom Appointment',
+                border: OutlineInputBorder(),
+              ),
+            )
+                : Container();
+          },
         ),
         if (isCustomAppointment)
           TextField(
@@ -144,14 +169,11 @@ class _AddAppointmentState extends State<AddAppointment> {
               border: OutlineInputBorder(),
             ),
             onChanged: (value) {
-              _selectedAppointmentType = value;
-              if (value.isEmpty) {
-                setState(() {}); // Only update the UI if necessary
-              }
+              setState(() {
+                _selectedAppointmentType = value;
+              });
             },
-
           ),
-
         const SizedBox(height: 16.0),
         TextField(
           controller: _descController,
@@ -172,7 +194,13 @@ class _AddAppointmentState extends State<AddAppointment> {
             elevation: 5,
           ),
           onPressed: () {
-            _addAppointment(_selectedDate);
+            // If the custom appointment is checked, use its value
+            if (isCustomAppointmentNotifier.value) {
+              _selectedAppointmentType = _customAppointmentController.text;
+            }
+
+            // Call the save function with the selected date and appointment type
+            _addAppointment(_selectedDate, _selectedAppointmentType);
           },
           child: const Text(
             "Save",
@@ -183,10 +211,10 @@ class _AddAppointmentState extends State<AddAppointment> {
             ),
           ),
         ),
+
       ],
     );
   }
-
 
   Future<List<Map<String, dynamic>>> _fetchAppointmentTypes() async {
     try {
@@ -207,7 +235,6 @@ class _AddAppointmentState extends State<AddAppointment> {
         {'type': 'Youth Fellowship', 'priority': 6.3},
         {'type': 'Bible Study', 'priority': 6.2},
         {'type': 'Fellowship Meal', 'priority': 5.5},
-
       ];
       types.sort((a, b) => b['priority'].compareTo(a['priority']));
       return types;
@@ -231,7 +258,8 @@ class _AddAppointmentState extends State<AddAppointment> {
       case 'Wedding Ceremony':
         return Icon(FontAwesomeIcons.heart, color: Colors.red.shade800);
       case 'Funeral Service':
-        return Icon(FontAwesomeIcons.skullCrossbones, color: Colors.grey.shade800);
+        return Icon(FontAwesomeIcons.skullCrossbones,
+            color: Colors.grey.shade800);
 
     // Baptism and Communion
       case 'Baptism':
@@ -254,7 +282,8 @@ class _AddAppointmentState extends State<AddAppointment> {
     // Church and Community
       case 'Church Anniversary':
       case 'Community Outreach':
-        return Icon(FontAwesomeIcons.peopleCarryBox, color: Colors.purple.shade800);
+        return Icon(FontAwesomeIcons.peopleCarryBox,
+            color: Colors.purple.shade800);
 
     // Music and Choir
       case 'Choir Practice':
@@ -264,7 +293,8 @@ class _AddAppointmentState extends State<AddAppointment> {
       case 'Fellowship Meal':
         return Icon(FontAwesomeIcons.utensils, color: Colors.brown.shade800);
       case 'Anniversary Service':
-        return Icon(FontAwesomeIcons.cakeCandles, color: Colors.yellow.shade800);
+        return Icon(FontAwesomeIcons.cakeCandles,
+            color: Colors.yellow.shade800);
 
     // Certificates
       case 'Membership Certificate':
@@ -277,11 +307,12 @@ class _AddAppointmentState extends State<AddAppointment> {
 
     // Default event icon
       default:
-        return Icon(FontAwesomeIcons.calendarDays, color: Colors.green.shade800);
+        return Icon(FontAwesomeIcons.calendarDays,
+            color: Colors.green.shade800);
     }
   }
 
-  void _addAppointment(DateTime selectedDate) async {
+  void _addAppointment(DateTime selectedDate, String appointmentType) async {
     // Check if description or appointment type is empty
     if (_descController.text.isEmpty || _selectedAppointmentType.isEmpty) {
       print('Please fill in all fields.');
@@ -301,7 +332,6 @@ class _AddAppointmentState extends State<AddAppointment> {
       orElse: () => {'type': _selectedAppointmentType, 'priority': 0},
     );
 
-
     var page = <String, dynamic>{
       "description": description,
       "date": Timestamp.fromDate(_selectedDate),
@@ -312,7 +342,8 @@ class _AddAppointmentState extends State<AddAppointment> {
       "email": tapAuth.auth.currentUser!.email,
     };
 
-    userStorage.createMemberEvent(tapAuth.getCurrentUserUID(), page, widget.type);
+    userStorage.createMemberEvent(
+        tapAuth.getCurrentUserUID(), page, widget.type);
     _showSuccessDialog();
   }
 
