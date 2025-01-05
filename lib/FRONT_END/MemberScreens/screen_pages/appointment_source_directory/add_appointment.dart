@@ -32,7 +32,8 @@ class _AddAppointmentState extends State<AddAppointment> {
   final _descController = TextEditingController();
   String _selectedAppointmentType = '';
   late List<Map<String, dynamic>> _appointmentType;
-
+  bool isCustomAppointment = false;
+  final _customAppointmentController = TextEditingController();
   @override
   void initState() {
     super.initState();
@@ -50,6 +51,7 @@ class _AddAppointmentState extends State<AddAppointment> {
   @override
   void dispose() {
     _descController.dispose();
+    _customAppointmentController.dispose();
     super.dispose();
   }
 
@@ -72,6 +74,8 @@ class _AddAppointmentState extends State<AddAppointment> {
     );
   }
 
+
+
   Widget _buildForm() {
     return ListView(
       padding: const EdgeInsets.all(16.0),
@@ -91,10 +95,11 @@ class _AddAppointmentState extends State<AddAppointment> {
         ),
         const SizedBox(height: 16.0),
         DropdownButtonFormField<String>(
-          value: _selectedAppointmentType,
+          value: isCustomAppointment ? null : _selectedAppointmentType,
           onChanged: (String? newValue) {
             setState(() {
               _selectedAppointmentType = newValue!;
+              isCustomAppointment = false; // Reset custom appointment field
             });
           },
           items: _appointmentType.map((Map<String, dynamic> value) {
@@ -111,6 +116,43 @@ class _AddAppointmentState extends State<AddAppointment> {
           }).toList(),
         ),
         const SizedBox(height: 16.0),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Or enter custom appointment:',
+              style: TextStyle(fontSize: 16),
+            ),
+            Checkbox(
+              value: isCustomAppointment,
+              onChanged: (bool? value) {
+                setState(() {
+                  isCustomAppointment = value!;
+                  if (isCustomAppointment) {
+                    _selectedAppointmentType = ''; // Reset dropdown
+                  }
+                });
+              },
+            ),
+          ],
+        ),
+        if (isCustomAppointment)
+          TextField(
+            controller: _customAppointmentController,
+            decoration: const InputDecoration(
+              labelText: 'Custom Appointment',
+              border: OutlineInputBorder(),
+            ),
+            onChanged: (value) {
+              _selectedAppointmentType = value;
+              if (value.isEmpty) {
+                setState(() {}); // Only update the UI if necessary
+              }
+            },
+
+          ),
+
+        const SizedBox(height: 16.0),
         TextField(
           controller: _descController,
           maxLines: 5,
@@ -123,26 +165,28 @@ class _AddAppointmentState extends State<AddAppointment> {
         ElevatedButton(
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-            backgroundColor: appGreen, // Adjust color as needed
+            backgroundColor: appGreen,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
-            elevation: 5, // Adds a shadow effect for depth
+            elevation: 5,
           ),
           onPressed: () {
             _addAppointment(_selectedDate);
           },
-          child:  const Text(
+          child: const Text(
             "Save",
             style: TextStyle(
               color: Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.w600,
-            ),),
+            ),
+          ),
         ),
       ],
     );
   }
+
 
   Future<List<Map<String, dynamic>>> _fetchAppointmentTypes() async {
     try {
@@ -160,15 +204,10 @@ class _AddAppointmentState extends State<AddAppointment> {
         {'type': 'Pastoral Visit', 'priority': 7.4},
         {'type': 'Prayer Meeting', 'priority': 7.3},
         {'type': 'Community Outreach', 'priority': 7.2},
-        {'type': 'Missionary Work', 'priority': 7.1},
         {'type': 'Youth Fellowship', 'priority': 6.3},
         {'type': 'Bible Study', 'priority': 6.2},
-        {'type': 'Choir Practice', 'priority': 6.1},
         {'type': 'Fellowship Meal', 'priority': 5.5},
-        {'type': 'Anniversary Service', 'priority': 5.4},
-        {'type': 'Baptismal Certificate', 'priority': 5.3},
-        {'type': 'Birthday Service', 'priority': 4.2},
-        {'type': 'Membership Certificate', 'priority': 4.1},
+
       ];
       types.sort((a, b) => b['priority'].compareTo(a['priority']));
       return types;
@@ -261,6 +300,7 @@ class _AddAppointmentState extends State<AddAppointment> {
           (element) => element['type'] == _selectedAppointmentType,
       orElse: () => {'type': _selectedAppointmentType, 'priority': 0},
     );
+
 
     var page = <String, dynamic>{
       "description": description,

@@ -575,7 +575,8 @@ class _AdminHomePageState extends State<AdminHomePage> {
                   children: [
                     const SizedBox(width: 8.0),
                     IconButton(
-                      icon: const Icon(Icons.close, color: Colors.black),
+                      icon: const Icon(FontAwesomeIcons.trashCan,
+                          color: Colors.red, size: 24.0),
                       onPressed: () {
                         showDialog(
                           context: context,

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 import 'package:bethel_app_final/BACK_END/Services/Functions/Users.dart';
 import 'package:bethel_app_final/FRONT_END/authentications/auth_classes/error_indicator.dart';
@@ -5,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import '../constant/color.dart';
+import 'package:fuzzy/fuzzy.dart';
 
 import '../constant/color.dart';
 
@@ -23,11 +26,13 @@ class _AdminApprovalState extends State<AdminApproval> {
   bool sortByMonth = false;
   bool sortByDay = false;
   int clickCount = 0;
+  get http => null;
+
 
   final Map<String, double> appointmentPriorities = {
-    'Sunday Service': 10,
+    'Funeral Service': 10,
     'Wedding Ceremony': 9.4,
-    'Funeral Service': 9.3,
+    'Sunday Service': 9.3,
     'Christmas Service': 9.2,
     'Easter Service': 9.1,
     'Baptism': 8.4,
@@ -37,16 +42,47 @@ class _AdminApprovalState extends State<AdminApproval> {
     'Pastoral Visit': 7.4,
     'Prayer Meeting': 7.3,
     'Community Outreach': 7.2,
-    'Missionary Work': 7.1,
     'Youth Fellowship': 6.3,
     'Bible Study': 6.2,
-    'Choir Practice': 6.1,
     'Fellowship Meal': 5.2,
-    'Anniversary Service': 5.1,
-    'Baptismal Certificate': 5.1,
-    'Birthday Service': 4.2,
-    'Membership Certificate': 4.1
   };
+  double defaultNewAppointmentPriority =0.0 ;
+
+  // CLASSIFY priority IF NOT IN THE appointmentPriorities from Flask API
+  Future<double> predictPriority(String appointmentType) async {
+    final String apiUrl = 'https://1f98-34-87-30-45.ngrok-free.app/predict_priority_v2';
+
+    Map<String, String> requestPayload = {'appointment_type': appointmentType};
+
+    try {
+      print('Sending JSON payload: $requestPayload');
+
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {"Content-Type": "application/json"},
+        body: json.encode(requestPayload),
+      );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData != null && responseData.containsKey('predicted_priority')) {
+          return responseData['predicted_priority'] as double;
+        } else {
+          throw Exception('API response missing predicted_priority');
+        }
+      } else {
+        throw Exception('Failed to predict priority: ${response.reasonPhrase}');
+      }
+    } catch (e) {
+      print('Error making request: $e');
+      return defaultNewAppointmentPriority;
+    }
+  }
+
+
 
   @override
   void initState() {
@@ -145,6 +181,79 @@ class _AdminApprovalState extends State<AdminApproval> {
     return groupedAppointments;
   }
 
+
+  double getPriorityForAppointment(String appointmentType) {
+    // First check for known types
+    Map<String, double> appointmentPriorities = {
+      "Funeral": 10.0,
+      "Wedding": 9.4,
+      "Sunday": 9.3,
+      "Christmas": 9.2,
+      "Easter": 9.1,
+      "Charity": 9.6,
+      "Team": 9.6,
+      "Camp": 9.5,
+      "Lecture": 9.0,
+      "Summer": 8.9,
+      "Party": 8.9,
+      "Hiking": 3.7,
+      "Conference": 8.6,
+      "Music": 8.6,
+      "Film": 7.9,
+      "Baptism": 8.4,
+      "Leadership": 8.2,
+      "Speaking": 8.2,
+      "Spiritual": 7.0,
+      "Counseling": 6.9,
+      "Health": 6.8,
+      "Picnic": 6.8,
+      "Bible": 6.2,
+      "Family": 7.7,
+      "Debate": 6.1,
+      "Fellowship": 5.2,
+      "Anniversary": 5.1,
+      "Volunteer": 4.3,
+      "Spring": 4.4,
+      "Art": 4.4,
+      "Graduation": 4.2,
+      "Birthday": 4.2,
+      "Membership": 4.1,
+      "Sports": 4.1,
+      "Senior": 3.9,
+      "Men": 3.8,
+      "Vacation": 3.7,
+      "Marriage": 3.7,
+    };
+
+    // Check if the appointment type is in the known priorities map
+    // Normalize the input string to lowercase to handle case insensitivity
+    String normalizedInput = appointmentType.toLowerCase();
+
+    // Create a fuzzy matcher for the available appointment types
+    List<String> appointmentKeys = appointmentPriorities.keys.toList();
+    var fuzzy = Fuzzy(appointmentKeys);
+
+    // Perform a fuzzy search to find the closest match
+    var results = fuzzy.search(normalizedInput);
+
+    if (results.isNotEmpty) {
+      // Find the best match
+      String bestMatch = results[0].item;
+      double priority = appointmentPriorities[bestMatch]!;
+      print('Found best match for "$appointmentType" as "$bestMatch": $priority');
+      return priority;
+    }
+
+    // If no match found, assign a default low priority (e.g., 0.0)
+    print('No match found for "$appointmentType", assigning default priority: 0.0');
+    return 0.0;
+
+  }
+
+
+
+
+
   @override
   Widget build(BuildContext context) {
     if (_pendingAppointmentsStream == null) {
@@ -206,45 +315,39 @@ class _AdminApprovalState extends State<AdminApproval> {
                     return const Center(
                       child: Text(
                         'No pending appointment.',
-                        style: TextStyle(
-                          fontSize: 18,
-                        ),
+                        style: TextStyle(fontSize: 18),
                       ),
                     );
                   }
                   // Sort appointments by month
                   List<DocumentSnapshot> sortedAppointments =
-                      sortAppointmentsByMonth(snapshot.data!);
+                  sortAppointmentsByMonth(snapshot.data!);
                   // Sort appointments by priority
                   // Sort appointments by priority using the priorities map and date
                   List<DocumentSnapshot> sortAppointmentsByPriority(
                       List<DocumentSnapshot> appointments) {
                     appointments.sort((a, b) {
-                      Map<String, dynamic> dataA =
-                          a.data() as Map<String, dynamic>;
-                      Map<String, dynamic> dataB =
-                          b.data() as Map<String, dynamic>;
+                      Map<String, dynamic> dataA = a.data() as Map<String, dynamic>;
+                      Map<String, dynamic> dataB = b.data() as Map<String, dynamic>;
 
                       String appointmentTypeA = dataA['appointmenttype'] ?? '';
                       String appointmentTypeB = dataB['appointmenttype'] ?? '';
 
-                      double priorityA = appointmentPriorities[appointmentTypeA] ??
-                          100; // Default low priority
-                      double priorityB =
-                          appointmentPriorities[appointmentTypeB] ?? 100;
+                      // Print the appointment types being compared
+                      print('Comparing appointment types: $appointmentTypeA vs $appointmentTypeB');
 
-                      // If priorities are the same, compare by date
-                      if (priorityA == priorityB) {
-                        DateTime dateA = dataA['date'].toDate();
-                        DateTime dateB = dataB['date'].toDate();
-                        return dateA.compareTo(dateB);
-                      }
+                      double priorityA = getPriorityForAppointment(appointmentTypeA);
+                      double priorityB = getPriorityForAppointment(appointmentTypeB);
 
-                      // Higher priority should come first
-                      return priorityB.compareTo(priorityA);
+                      // Print the priority values for comparison
+                      print('Priorities: $priorityA vs $priorityB');
+
+                      return priorityB.compareTo(priorityA); // Sort in descending order of priority
                     });
                     return appointments;
                   }
+
+
 
 // Re-prioritize and refresh the appointments
                   void refreshAppointments() {
@@ -312,20 +415,29 @@ class _AdminApprovalState extends State<AdminApproval> {
 
                   // Group appointments by date
                   Map<String, List<DocumentSnapshot>> groupedAppointments =
-                      groupAppointmentsByDate(sortedAppointments);
+                  groupAppointmentsByDate(sortedAppointments);
 
                   Map<String, double> highestPriorityByDate = {};
 
+                  // First, calculate the highest priority for each date
                   groupedAppointments.forEach((dateKey, appointments) {
-                    double highestPriority = appointments.map((doc) {
-                      Map<String, dynamic> data =
-                          doc.data() as Map<String, dynamic>;
-                      String appointmentType = data['appointmenttype'] ?? '';
-                      return appointmentPriorities[appointmentType] ?? 100;
-                    }).reduce((a, b) => a > b ? a : b);
+                    double highestPriority = 0.0;
 
+                    // Find the highest priority among the appointments
+                    for (var appointment in appointments) {
+                      String appointmentType = appointment['appointmenttype'];
+                      double appointmentPriority = getPriorityForAppointment(appointmentType);
+
+                      if (appointmentPriority > highestPriority) {
+                        highestPriority = appointmentPriority;
+                      }
+                    }
+
+                    // Store the highest priority for the date
                     highestPriorityByDate[dateKey] = highestPriority;
                   });
+
+
 
                   return ListView(
                     children: [
@@ -359,9 +471,12 @@ class _AdminApprovalState extends State<AdminApproval> {
                               Map<String, dynamic> data = document.data() as Map<String, dynamic>;
 
                               String appointmentType = data['appointmenttype'] ?? '';
-                              double appointmentPriority = appointmentPriorities[appointmentType] ?? 100;
+                              double appointmentPriority = getPriorityForAppointment(appointmentType);
 
+                              // Check if this appointment is the highest priority for the day
                               bool isHighestPriority = appointmentPriority == highestPriorityByDate[dateKey];
+
+
 
                               // Function to return an appropriate icon based on the appointment type
                               Icon getAppointmentIcon(String appointmentType) {
@@ -369,7 +484,7 @@ class _AdminApprovalState extends State<AdminApproval> {
                                 // Religious Services
                                   case 'Sunday Service':
                                   case 'Christmas Service':
-                                  return Icon(FontAwesomeIcons.church, color: Colors.pink.shade800);
+                                    return Icon(FontAwesomeIcons.church, color: Colors.pink.shade800);
                                   case 'Easter Service':
                                     return const Icon(FontAwesomeIcons.egg, color: Colors.white);
 
@@ -463,6 +578,19 @@ class _AdminApprovalState extends State<AdminApproval> {
                                                     color: Colors.black87,
                                                   ),
                                                 ),
+                                                const SizedBox(height: 5),
+                                                if (isHighestPriority)
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.red,
+                                                      borderRadius: BorderRadius.circular(20),
+                                                    ),
+                                                    child: const Text(
+                                                      'High Priority',
+                                                      style: TextStyle(color: Colors.white, fontSize: 12),
+                                                    ),
+                                                  ),
                                               ],
                                             ),
                                           ),
@@ -486,57 +614,36 @@ class _AdminApprovalState extends State<AdminApproval> {
                                             child: Column(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                Stack(
-                                                  children: [
-                                                    // Close button in the top-right corner
-                                                    Positioned(
-                                                      right: 0,
-                                                      top: 0,
-                                                      child: IconButton(
-                                                        icon: const Icon(Icons.close, color: Colors.black),
-                                                        onPressed: () {
-                                                          Navigator.of(context).pop(); // Close the dialog
-                                                        },
+                                                CircleAvatar(
+                                                  radius: 24,
+                                                  backgroundColor: Colors.amber.shade300,
+                                                  child: getAppointmentIcon(data['appointmenttype'] ?? 'Unknown Type'),
+                                                ),
+                                                const SizedBox(width: 16),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        data['appointmenttype'] ?? 'Unknown Type',
+                                                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
                                                       ),
-                                                    ),
-                                                    // Content Section
-                                                    Column(
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      children: [
-                                                        Text(
-                                                          data['appointmenttype'] ?? 'Unknown Type',
-                                                          style: const TextStyle(
-                                                            fontSize: 20,
-                                                            fontWeight: FontWeight.bold,
-                                                            color: Colors.black87,
+                                                      const SizedBox(height: 5),
+                                                      // Add the High Priority badge if this appointment has the highest priority
+                                                      if (isHighestPriority)
+                                                        Container(
+                                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                          decoration: BoxDecoration(
+                                                            color: Colors.red,
+                                                            borderRadius: BorderRadius.circular(20),
+                                                          ),
+                                                          child: const Text(
+                                                            'High Priority',
+                                                            style: TextStyle(color: Colors.white, fontSize: 12),
                                                           ),
                                                         ),
-                                                        const SizedBox(height: 12),
-                                                        Text(
-                                                          'Email: ${data['email'] ?? ''}',
-                                                          style: const TextStyle(fontSize: 14, color: Colors.grey),
-                                                        ),
-                                                        const SizedBox(height: 8),
-                                                        Text(
-                                                          'Description: ${data['description'] ?? ''}',
-                                                          style: const TextStyle(fontSize: 14, color: Colors.black87)
-                                                        ),
-                                                        const SizedBox(height: 16),
-                                                        if (isHighestPriority)
-                                                          Container(
-                                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                                            decoration: BoxDecoration(
-                                                              color: Colors.red,
-                                                              borderRadius: BorderRadius.circular(20),
-                                                            ),
-                                                            child: const Text(
-                                                              'High Priority',
-                                                              style: TextStyle(color: Colors.white, fontSize: 12),
-                                                            ),
-                                                          ),
-                                                      ],
-                                                    ),
-                                                  ],
+                                                    ],
+                                                  ),
                                                 ),
                                               ],
                                             ),

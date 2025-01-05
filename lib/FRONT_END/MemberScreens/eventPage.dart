@@ -175,7 +175,7 @@ class _EventPageState extends State<EventPage> {
                       'Approved requests',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                        fontSize: 20,
                       ),
                     ),
                   ),
@@ -414,7 +414,7 @@ class _EventPageState extends State<EventPage> {
                           'Pending requests',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 18,
+                            fontSize: 20,
                           ),
                         ),
                       ),
