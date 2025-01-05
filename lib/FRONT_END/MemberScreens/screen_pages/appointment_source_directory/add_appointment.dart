@@ -5,6 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 
+import '../../../constant/color.dart';
+
 class AddAppointment extends StatefulWidget {
   final String type;
   final DateTime firstDate;
@@ -119,10 +121,24 @@ class _AddAppointmentState extends State<AddAppointment> {
         ),
         const SizedBox(height: 16.0),
         ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            backgroundColor: appGreen, // Adjust color as needed
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            elevation: 5, // Adds a shadow effect for depth
+          ),
           onPressed: () {
             _addAppointment(_selectedDate);
           },
-          child: const Text("Save"),
+          child:  const Text(
+            "Save",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),),
         ),
       ],
     );

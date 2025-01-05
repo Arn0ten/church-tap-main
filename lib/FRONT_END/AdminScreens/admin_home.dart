@@ -106,7 +106,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.only(top: 40, left: 20, right: 20),
+        padding: const EdgeInsets.only(top: 5, left: 20, right: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -138,13 +138,12 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 const SizedBox(width: 50),
               ],
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 7),
             const Divider(
               color: appGreen,
             ),
-            const SizedBox(height: 4),
             Padding(
-              padding: const EdgeInsets.all(10.0),
+              padding: const EdgeInsets.all(5.0),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   value: _selectedEventType,
@@ -176,7 +175,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 'Members approved appointments',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 18,
+                  fontSize: 20,
                 ),
               ),
             ),
@@ -242,7 +241,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 'Church events',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 18,
+                  fontSize: 20,
                 ),
               ),
             ),
@@ -380,14 +379,14 @@ class _AdminHomePageState extends State<AdminHomePage> {
       color: cardColor,
       elevation: 2,
       margin: const EdgeInsets.symmetric(
-          vertical: 8, horizontal: 4),
+          vertical: 4, horizontal: 4),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         title: Row(
           children: [
             CircleAvatar(
               radius: 24,
-              backgroundColor: Colors.green.shade300,
+              backgroundColor: Colors.green.shade50,
               child: getAppointmentIcon(
                 data['appointmenttype'] ?? 'Unknown Type',
               ),
@@ -512,7 +511,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
       color: cardColor,
       elevation: 2,
       margin: const EdgeInsets.symmetric(
-          vertical: 8, horizontal: 4),
+          vertical: 4, horizontal: 4),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         title: Row(
@@ -566,19 +565,9 @@ class _AdminHomePageState extends State<AdminHomePage> {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            IconButton(
-              icon: const Icon(Icons.info_outline),
-              onPressed: () {
-                setState(() {
-                  showOptionsMap[id] =
-                  !(showOptionsMap[id] ?? false);
-                });
-              },
-            ),
-            if (showOptionsMap[id] ?? false)
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
+                  color: Colors.green.shade200,
                   borderRadius: BorderRadius.circular(8.0),
                 ),
                 child: Row(
@@ -586,9 +575,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                   children: [
                     const SizedBox(width: 8.0),
                     IconButton(
-                      icon: const Icon(Icons.delete,
-                          color: Colors.red,
-                          size: 24.0),
+                      icon: const Icon(Icons.close, color: Colors.black),
                       onPressed: () {
                         showDialog(
                           context: context,
@@ -598,7 +585,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                               title: const Text(
                                   "Confirm Delete"),
                               content: const Text(
-                                  "Are you sure you want to delete this request?"),
+                                  "Are you sure you want to delete this event?"),
                               actions: <Widget>[
                                 TextButton(
                                   onPressed: () {

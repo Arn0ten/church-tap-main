@@ -118,7 +118,7 @@ class _EventPageState extends State<EventPage> {
     }
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.only(top: 40, left: 20, right: 20),
+        padding: const EdgeInsets.only(top: 25, left: 20, right: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -564,19 +564,10 @@ class _EventPageState extends State<EventPage> {
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                IconButton(
-                                  icon: const Icon(Icons.info_outline),
-                                  onPressed: () {
-                                    setState(() {
-                                      showOptionsMap[id] =
-                                      !(showOptionsMap[id] ?? false);
-                                    });
-                                  },
-                                ),
-                                if (showOptionsMap[id] ?? false)
+
                                   Container(
                                     decoration: BoxDecoration(
-                                      color: Colors.grey.shade200,
+                                      color: Colors.amber.shade300,
                                       borderRadius:
                                       BorderRadius.circular(8.0),
                                     ),
@@ -584,7 +575,7 @@ class _EventPageState extends State<EventPage> {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         IconButton(
-                                          icon: const Icon(Icons.edit,
+                                          icon: const Icon(FontAwesomeIcons.penToSquare,
                                               color: appGreen, size: 24.0),
                                           onPressed: () {
                                             Navigator.push(
@@ -602,7 +593,7 @@ class _EventPageState extends State<EventPage> {
                                         ),
                                         const SizedBox(width: 8.0),
                                         IconButton(
-                                          icon: const Icon(Icons.delete,
+                                          icon: const Icon(FontAwesomeIcons.trashCan,
                                               color: Colors.red, size: 24.0),
                                           onPressed: () {
                                             showDialog(
