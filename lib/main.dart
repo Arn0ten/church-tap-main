@@ -3,13 +3,13 @@ import 'dart:convert';
 import 'package:bethel_app_final/FRONT_END/MemberScreens/NotificationTab.dart';
 import 'package:bethel_app_final/FRONT_END/MemberScreens/screen_pages/notification_pages/push_notification.dart';
 import 'package:bethel_app_final/FRONT_END/MemberScreens/screens/splash_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
-import 'firebase_options.dart';
 
+import 'firebase_options.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -78,7 +78,7 @@ Future<void> main() async {
 
   // for handling in terminated state
   final RemoteMessage? message =
-  await FirebaseMessaging.instance.getInitialMessage();
+      await FirebaseMessaging.instance.getInitialMessage();
 
   if (message != null) {
     print("Launched from terminated state");
@@ -90,7 +90,6 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -99,10 +98,7 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       home: const SplashScreen(),
-      routes: {
-        '/message': (context) => const NotificationTab()
-      },
+      routes: {'/message': (context) => const NotificationTab()},
     );
   }
-
 }
