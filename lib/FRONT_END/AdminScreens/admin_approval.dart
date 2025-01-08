@@ -9,9 +9,6 @@ import 'package:intl/intl.dart';
 import '../constant/color.dart';
 import 'package:fuzzy/fuzzy.dart';
 
-import '../constant/color.dart';
-
-
 class AdminApproval extends StatefulWidget {
   const AdminApproval({Key? key}) : super(key: key);
 
@@ -50,7 +47,7 @@ class _AdminApprovalState extends State<AdminApproval> {
 
   // CLASSIFY priority IF NOT IN THE appointmentPriorities from Flask API
   Future<double> predictPriority(String appointmentType) async {
-    final String apiUrl = 'https://1f98-34-87-30-45.ngrok-free.app/predict_priority_v2';
+    const String apiUrl = 'https://1f98-34-87-30-45.ngrok-free.app/predict_priority_v2';
 
     Map<String, String> requestPayload = {'appointment_type': appointmentType};
 
