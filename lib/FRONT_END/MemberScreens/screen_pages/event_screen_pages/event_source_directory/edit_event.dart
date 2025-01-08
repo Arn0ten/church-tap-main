@@ -11,7 +11,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 class EditEvent extends StatefulWidget {
   final DateTime firstDate;
   final DateTime lastDate;
-  final String documentId; // Change this line
+  final String documentId;
   final bool isAdmin;
   const EditEvent(
       {Key? key,
@@ -19,7 +19,7 @@ class EditEvent extends StatefulWidget {
         required this.lastDate,
         required this.documentId,
         required this.isAdmin})
-      : super(key: key); // Change this line
+      : super(key: key);
 
   @override
   State<EditEvent> createState() => _EditEventState();

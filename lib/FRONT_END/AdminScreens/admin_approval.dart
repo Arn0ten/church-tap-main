@@ -230,7 +230,7 @@ class _AdminApprovalState extends State<AdminApproval> {
     List<String> appointmentKeys = appointmentPriorities.keys.toList();
     var fuzzy = Fuzzy(appointmentKeys);
 
-    // Perform a fuzzy search to find the closest match
+    // Perform a fuzzy search to find the closest match paara sa typo ni
     var results = fuzzy.search(normalizedInput);
 
     if (results.isNotEmpty) {
