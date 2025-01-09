@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../constant/color.dart';
 import 'package:fuzzy/fuzzy.dart';
 
@@ -25,7 +26,6 @@ class _AdminApprovalState extends State<AdminApproval> {
   int clickCount = 0;
   get http => null;
 
-
   final Map<String, double> appointmentPriorities = {
     'Funeral Service': 10,
     'Wedding Ceremony': 9.4,
@@ -43,11 +43,12 @@ class _AdminApprovalState extends State<AdminApproval> {
     'Bible Study': 6.2,
     'Fellowship Meal': 5.2,
   };
-  double defaultNewAppointmentPriority =0.0 ;
+  double defaultNewAppointmentPriority = 0.0;
 
   // CLASSIFY priority IF NOT IN THE appointmentPriorities from Flask API
   Future<double> predictPriority(String appointmentType) async {
-    const String apiUrl = 'https://1f98-34-87-30-45.ngrok-free.app/predict_priority_v2';
+    const String apiUrl =
+        'https://1f98-34-87-30-45.ngrok-free.app/predict_priority_v2';
 
     Map<String, String> requestPayload = {'appointment_type': appointmentType};
 
@@ -65,7 +66,8 @@ class _AdminApprovalState extends State<AdminApproval> {
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
-        if (responseData != null && responseData.containsKey('predicted_priority')) {
+        if (responseData != null &&
+            responseData.containsKey('predicted_priority')) {
           return responseData['predicted_priority'] as double;
         } else {
           throw Exception('API response missing predicted_priority');
@@ -78,8 +80,6 @@ class _AdminApprovalState extends State<AdminApproval> {
       return defaultNewAppointmentPriority;
     }
   }
-
-
 
   @override
   void initState() {
@@ -178,7 +178,6 @@ class _AdminApprovalState extends State<AdminApproval> {
     return groupedAppointments;
   }
 
-
   double getPriorityForAppointment(String appointmentType) {
     // First check for known types
     Map<String, double> appointmentPriorities = {
@@ -237,26 +236,26 @@ class _AdminApprovalState extends State<AdminApproval> {
       // Find the best match
       String bestMatch = results[0].item;
       double priority = appointmentPriorities[bestMatch]!;
-      print('Found best match for "$appointmentType" as "$bestMatch": $priority');
+      print(
+          'Found best match for "$appointmentType" as "$bestMatch": $priority');
       return priority;
     }
 
     // If no match found, assign a default low priority (e.g., 0.0)
-    print('No match found for "$appointmentType", assigning default priority: 0.0');
+    print(
+        'No match found for "$appointmentType", assigning default priority: 0.0');
     return 0.0;
-
   }
-
-
-
-
 
   @override
   Widget build(BuildContext context) {
     if (_pendingAppointmentsStream == null) {
-      return const Scaffold(
+      return Scaffold(
         body: Center(
-          child: CircularProgressIndicator(),
+          child: LoadingAnimationWidget.staggeredDotsWave(
+            color: Colors.blue, // Customize the color
+            size: 50.0, // Customize the size
+          ),
         ),
       );
     }
@@ -303,7 +302,12 @@ class _AdminApprovalState extends State<AdminApproval> {
                 stream: _pendingAppointmentsStream,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return Center(
+                      child: LoadingAnimationWidget.staggeredDotsWave(
+                        color: Colors.green, // Customize the color
+                        size: 50.0, // Customize the size
+                      ),
+                    );
                   }
                   if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
@@ -318,33 +322,37 @@ class _AdminApprovalState extends State<AdminApproval> {
                   }
                   // Sort appointments by month
                   List<DocumentSnapshot> sortedAppointments =
-                  sortAppointmentsByMonth(snapshot.data!);
+                      sortAppointmentsByMonth(snapshot.data!);
                   // Sort appointments by priority
                   // Sort appointments by priority using the priorities map and date
                   List<DocumentSnapshot> sortAppointmentsByPriority(
                       List<DocumentSnapshot> appointments) {
                     appointments.sort((a, b) {
-                      Map<String, dynamic> dataA = a.data() as Map<String, dynamic>;
-                      Map<String, dynamic> dataB = b.data() as Map<String, dynamic>;
+                      Map<String, dynamic> dataA =
+                          a.data() as Map<String, dynamic>;
+                      Map<String, dynamic> dataB =
+                          b.data() as Map<String, dynamic>;
 
                       String appointmentTypeA = dataA['appointmenttype'] ?? '';
                       String appointmentTypeB = dataB['appointmenttype'] ?? '';
 
                       // Print the appointment types being compared
-                      print('Comparing appointment types: $appointmentTypeA vs $appointmentTypeB');
+                      print(
+                          'Comparing appointment types: $appointmentTypeA vs $appointmentTypeB');
 
-                      double priorityA = getPriorityForAppointment(appointmentTypeA);
-                      double priorityB = getPriorityForAppointment(appointmentTypeB);
+                      double priorityA =
+                          getPriorityForAppointment(appointmentTypeA);
+                      double priorityB =
+                          getPriorityForAppointment(appointmentTypeB);
 
                       // Print the priority values for comparison
                       print('Priorities: $priorityA vs $priorityB');
 
-                      return priorityB.compareTo(priorityA); // Sort in descending order of priority
+                      return priorityB.compareTo(
+                          priorityA); // Sort in descending order of priority
                     });
                     return appointments;
                   }
-
-
 
 // Re-prioritize and refresh the appointments
                   void refreshAppointments() {
@@ -412,7 +420,7 @@ class _AdminApprovalState extends State<AdminApproval> {
 
                   // Group appointments by date
                   Map<String, List<DocumentSnapshot>> groupedAppointments =
-                  groupAppointmentsByDate(sortedAppointments);
+                      groupAppointmentsByDate(sortedAppointments);
 
                   Map<String, double> highestPriorityByDate = {};
 
@@ -423,7 +431,8 @@ class _AdminApprovalState extends State<AdminApproval> {
                     // Find the highest priority among the appointments
                     for (var appointment in appointments) {
                       String appointmentType = appointment['appointmenttype'];
-                      double appointmentPriority = getPriorityForAppointment(appointmentType);
+                      double appointmentPriority =
+                          getPriorityForAppointment(appointmentType);
 
                       if (appointmentPriority > highestPriority) {
                         highestPriority = appointmentPriority;
@@ -433,8 +442,6 @@ class _AdminApprovalState extends State<AdminApproval> {
                     // Store the highest priority for the date
                     highestPriorityByDate[dateKey] = highestPriority;
                   });
-
-
 
                   return ListView(
                     children: [
@@ -458,87 +465,106 @@ class _AdminApprovalState extends State<AdminApproval> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4.0),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 4.0),
                               child: Text(
                                 'Date: $dateKey',
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                             ),
                             ...appointments.map((DocumentSnapshot document) {
-                              Map<String, dynamic> data = document.data() as Map<String, dynamic>;
+                              Map<String, dynamic> data =
+                                  document.data() as Map<String, dynamic>;
 
-                              String appointmentType = data['appointmenttype'] ?? '';
-                              double appointmentPriority = getPriorityForAppointment(appointmentType);
+                              String appointmentType =
+                                  data['appointmenttype'] ?? '';
+                              double appointmentPriority =
+                                  getPriorityForAppointment(appointmentType);
 
                               // Check if this appointment is the highest priority for the day
-                              bool isHighestPriority = appointmentPriority == highestPriorityByDate[dateKey];
-
-
+                              bool isHighestPriority = appointmentPriority ==
+                                  highestPriorityByDate[dateKey];
 
                               // Function to return an appropriate icon based on the appointment type
                               Icon getAppointmentIcon(String appointmentType) {
                                 switch (appointmentType) {
-                                // Religious Services
+                                  // Religious Services
                                   case 'Sunday Service':
                                   case 'Christmas Service':
-                                    return Icon(FontAwesomeIcons.church, color: Colors.pink.shade800);
+                                    return Icon(FontAwesomeIcons.church,
+                                        color: Colors.pink.shade800);
                                   case 'Easter Service':
-                                    return const Icon(FontAwesomeIcons.egg, color: Colors.white);
+                                    return const Icon(FontAwesomeIcons.egg,
+                                        color: Colors.white);
 
-                                // Ceremonies
+                                  // Ceremonies
                                   case 'Wedding Ceremony':
-                                    return Icon(FontAwesomeIcons.heart, color: Colors.red.shade800);
+                                    return Icon(FontAwesomeIcons.heart,
+                                        color: Colors.red.shade800);
                                   case 'Funeral Service':
-                                    return Icon(FontAwesomeIcons.skullCrossbones, color: Colors.grey.shade800);
+                                    return Icon(
+                                        FontAwesomeIcons.skullCrossbones,
+                                        color: Colors.grey.shade800);
 
-                                // Baptism and Communion
+                                  // Baptism and Communion
                                   case 'Baptism':
                                   case 'Communion Service':
                                   case 'Infant Dedication':
-                                    return Icon(FontAwesomeIcons.dove, color: Colors.grey.shade300);
+                                    return Icon(FontAwesomeIcons.dove,
+                                        color: Colors.grey.shade300);
 
-                                // Visits and Missionary Work
+                                  // Visits and Missionary Work
                                   case 'Pastoral Visit':
                                   case 'Missionary Work':
-                                    return Icon(FontAwesomeIcons.businessTime, color: Colors.blue.shade800);
+                                    return Icon(FontAwesomeIcons.businessTime,
+                                        color: Colors.blue.shade800);
 
-                                // Prayer and Fellowship
+                                  // Prayer and Fellowship
                                   case 'Prayer Meeting':
-                                    return Icon(FontAwesomeIcons.handsPraying, color: Colors.teal.shade800);
+                                    return Icon(FontAwesomeIcons.handsPraying,
+                                        color: Colors.teal.shade800);
                                   case 'Youth Fellowship':
                                   case 'Bible Study':
-                                    return Icon(FontAwesomeIcons.bookOpen, color: Colors.orange.shade800);
+                                    return Icon(FontAwesomeIcons.bookOpen,
+                                        color: Colors.orange.shade800);
 
-                                // Church and Community
+                                  // Church and Community
                                   case 'Church Anniversary':
                                   case 'Community Outreach':
-                                    return Icon(FontAwesomeIcons.peopleCarryBox, color: Colors.purple.shade800);
+                                    return Icon(FontAwesomeIcons.peopleCarryBox,
+                                        color: Colors.purple.shade800);
 
-                                // Music and Choir
+                                  // Music and Choir
                                   case 'Choir Practice':
-                                    return Icon(FontAwesomeIcons.music, color: Colors.green.shade800);
+                                    return Icon(FontAwesomeIcons.music,
+                                        color: Colors.green.shade800);
 
-                                // Meals and Socials
+                                  // Meals and Socials
                                   case 'Fellowship Meal':
-                                    return Icon(FontAwesomeIcons.utensils, color: Colors.brown.shade800);
+                                    return Icon(FontAwesomeIcons.utensils,
+                                        color: Colors.brown.shade800);
                                   case 'Anniversary Service':
-                                    return Icon(FontAwesomeIcons.cakeCandles, color: Colors.yellow.shade800);
+                                    return Icon(FontAwesomeIcons.cakeCandles,
+                                        color: Colors.yellow.shade800);
 
-                                // Certificates
+                                  // Certificates
                                   case 'Membership Certificate':
                                   case 'Baptismal Certificate':
-                                    return Icon(FontAwesomeIcons.idCard, color: Colors.blueGrey.shade800);
+                                    return Icon(FontAwesomeIcons.idCard,
+                                        color: Colors.blueGrey.shade800);
 
-                                // Birthday Service
+                                  // Birthday Service
                                   case 'Birthday Service':
-                                    return Icon(FontAwesomeIcons.cakeCandles, color: Colors.pink.shade600);
+                                    return Icon(FontAwesomeIcons.cakeCandles,
+                                        color: Colors.pink.shade600);
 
-                                // Default event icon
+                                  // Default event icon
                                   default:
-                                    return Icon(FontAwesomeIcons.calendarDays, color: Colors.green.shade800);
+                                    return Icon(FontAwesomeIcons.calendarDays,
+                                        color: Colors.green.shade800);
                                 }
                               }
-
 
                               return Draggable<String>(
                                 data: document.id,
@@ -547,28 +573,35 @@ class _AdminApprovalState extends State<AdminApproval> {
                                   child: Card(
                                     color: Colors.amber.shade200,
                                     elevation: 5,
-                                    margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                                    margin: const EdgeInsets.symmetric(
+                                        vertical: 4, horizontal: 16),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: ListTile(
-                                      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              vertical: 12, horizontal: 16),
                                       title: Row(
                                         children: [
                                           CircleAvatar(
                                             radius: 24,
-                                            backgroundColor: Colors.amber.shade300,
+                                            backgroundColor:
+                                                Colors.amber.shade300,
                                             child: getAppointmentIcon(
-                                              data['appointmenttype'] ?? 'Unknown Type',
+                                              data['appointmenttype'] ??
+                                                  'Unknown Type',
                                             ),
                                           ),
                                           const SizedBox(width: 16),
                                           Expanded(
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                  data['appointmenttype'] ?? 'Unknown Type',
+                                                  data['appointmenttype'] ??
+                                                      'Unknown Type',
                                                   style: const TextStyle(
                                                     fontSize: 18,
                                                     fontWeight: FontWeight.bold,
@@ -578,14 +611,21 @@ class _AdminApprovalState extends State<AdminApproval> {
                                                 const SizedBox(height: 5),
                                                 if (isHighestPriority)
                                                   Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 4),
                                                     decoration: BoxDecoration(
                                                       color: Colors.red,
-                                                      borderRadius: BorderRadius.circular(20),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              20),
                                                     ),
                                                     child: const Text(
                                                       'High Priority',
-                                                      style: TextStyle(color: Colors.white, fontSize: 12),
+                                                      style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 12),
                                                     ),
                                                   ),
                                               ],
@@ -604,43 +644,142 @@ class _AdminApprovalState extends State<AdminApproval> {
                                       builder: (BuildContext context) {
                                         return Dialog(
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
                                           ),
                                           child: Padding(
                                             padding: const EdgeInsets.all(16.0),
                                             child: Column(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                CircleAvatar(
-                                                  radius: 24,
-                                                  backgroundColor: Colors.amber.shade300,
-                                                  child: getAppointmentIcon(data['appointmenttype'] ?? 'Unknown Type'),
-                                                ),
-                                                const SizedBox(width: 16),
-                                                Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Text(
-                                                        data['appointmenttype'] ?? 'Unknown Type',
-                                                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                                                Stack(
+                                                  children: [
+                                                    // Close button in the top-right corner
+                                                    Positioned(
+                                                      right: 0,
+                                                      top: 0,
+                                                      child: IconButton(
+                                                        icon: const Icon(
+                                                            Icons.close,
+                                                            color:
+                                                                Colors.black),
+                                                        onPressed: () {
+                                                          Navigator.of(context)
+                                                              .pop(); // Close the dialog
+                                                        },
                                                       ),
-                                                      const SizedBox(height: 5),
-                                                      // Add the High Priority badge if this appointment has the highest priority
-                                                      if (isHighestPriority)
-                                                        Container(
-                                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                                          decoration: BoxDecoration(
-                                                            color: Colors.red,
-                                                            borderRadius: BorderRadius.circular(20),
-                                                          ),
-                                                          child: const Text(
-                                                            'High Priority',
-                                                            style: TextStyle(color: Colors.white, fontSize: 12),
-                                                          ),
+                                                    ),
+                                                    // Content Section
+                                                    Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                         Row(
+                                                          children: [
+                                                            CircleAvatar(
+                                                              radius: 24,
+                                                              backgroundColor:
+                                                              Colors.amber.shade300,
+                                                              child: getAppointmentIcon(
+                                                                data['appointmenttype'] ??
+                                                                    'Unknown Type',
+                                                              ),
+                                                            ),
+                                                            const SizedBox(width: 16),
+                                                            Expanded(
+                                                              child: Column(
+                                                                crossAxisAlignment:
+                                                                CrossAxisAlignment.start,
+                                                                children: [
+                                                                  Text(
+                                                                    data['appointmenttype'] ??
+                                                                        'Unknown Type',
+                                                                    style: const TextStyle(
+                                                                      fontSize: 18,
+                                                                      fontWeight: FontWeight.bold,
+                                                                      color: Colors.black87,
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                          ],
                                                         ),
-                                                    ],
-                                                  ),
+                                                        const SizedBox(
+                                                            height: 4),
+                                                        Text(
+                                                          'Email: ${data['email'] ?? ''}',
+                                                          style:
+                                                              const TextStyle(
+                                                                  fontSize: 14,
+                                                                  color: Colors
+                                                                      .grey),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 8),
+                                                        Text(
+                                                          'Description: ${data['description'] ?? ''}',
+                                                          style:
+                                                              const TextStyle(
+                                                                  fontSize: 14,
+                                                                  color: Colors
+                                                                      .black87),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 16),
+                                                        if (isHighestPriority)
+                                                          Row(
+                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                            children: [
+                                                              Container(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .symmetric(
+                                                                        horizontal:
+                                                                            8,
+                                                                        vertical:
+                                                                            4),
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  color: Colors.red,
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              20),
+                                                                ),
+
+                                                                child: const Text(
+                                                                  'High Priority',
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .white,
+                                                                      fontSize: 12),
+                                                                ),
+
+                                                              ),
+
+                                                            ],
+                                                          ),
+                                                        Row(
+                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                          children: [
+                                                            const SizedBox(
+                                                                height: 16),
+                                                            Text(
+                                                              'Date: $dateKey',
+                                                              style:
+                                                              const TextStyle(
+                                                                  fontSize: 14,
+                                                                  color: Colors
+                                                                      .grey),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ],
+                                                    ),
+
+                                                  ],
                                                 ),
                                               ],
                                             ),
@@ -652,28 +791,36 @@ class _AdminApprovalState extends State<AdminApproval> {
                                   child: Card(
                                     color: Colors.amber.shade200,
                                     elevation: 5,
-                                    margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                                    margin: const EdgeInsets.symmetric(
+                                        vertical: 8, horizontal: 16),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: ListTile(
-                                      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              vertical: 12, horizontal: 16),
                                       title: Row(
                                         children: [
                                           CircleAvatar(
                                             radius: 24,
-                                            backgroundColor: Colors.amber.shade300,
+                                            backgroundColor:
+                                                Colors.amber.shade300,
                                             child: getAppointmentIcon(
-                                              data['appointmenttype'] ?? 'Unknown Type',
+                                              data['appointmenttype'] ??
+                                                  'Unknown Type',
                                             ),
                                           ),
+
                                           const SizedBox(width: 16),
                                           Expanded(
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                  data['appointmenttype'] ?? 'Unknown Type',
+                                                  data['appointmenttype'] ??
+                                                      'Unknown Type',
                                                   style: const TextStyle(
                                                     fontSize: 18,
                                                     fontWeight: FontWeight.bold,
@@ -683,14 +830,21 @@ class _AdminApprovalState extends State<AdminApproval> {
                                                 const SizedBox(height: 5),
                                                 if (isHighestPriority)
                                                   Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 4),
                                                     decoration: BoxDecoration(
                                                       color: Colors.red,
-                                                      borderRadius: BorderRadius.circular(20),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              20),
                                                     ),
                                                     child: const Text(
                                                       'High Priority',
-                                                      style: TextStyle(color: Colors.white, fontSize: 12),
+                                                      style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 12),
                                                     ),
                                                   ),
                                               ],
@@ -701,17 +855,22 @@ class _AdminApprovalState extends State<AdminApproval> {
                                       subtitle: Padding(
                                         padding: const EdgeInsets.only(top: 8),
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             const SizedBox(height: 4),
                                             Text(
                                               'Email: ${data['email'] ?? ''}',
-                                              style: const TextStyle(fontSize: 14, color: Colors.grey),
+                                              style: const TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.grey),
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
                                               'Description: ${data['description'] ?? ''}',
-                                              style: const TextStyle(fontSize: 14, color: Colors.black87),
+                                              style: const TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.black87),
                                               overflow: TextOverflow.ellipsis,
                                               maxLines: 2,
                                             ),
@@ -722,13 +881,23 @@ class _AdminApprovalState extends State<AdminApproval> {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           IconButton(
-                                            icon: const Icon(Icons.check, color: Colors.green, size: 30),
-                                            onPressed: () => handleAppointmentAction(document.id, data['userID'], true),
+                                            icon: const Icon(Icons.check,
+                                                color: Colors.green, size: 30),
+                                            onPressed: () =>
+                                                handleAppointmentAction(
+                                                    document.id,
+                                                    data['userID'],
+                                                    true),
                                           ),
                                           const SizedBox(width: 8),
                                           IconButton(
-                                            icon: const Icon(Icons.close, color: Colors.red, size: 30),
-                                            onPressed: () => handleAppointmentAction(document.id, data['userID'], false),
+                                            icon: const Icon(Icons.close,
+                                                color: Colors.red, size: 30),
+                                            onPressed: () =>
+                                                handleAppointmentAction(
+                                                    document.id,
+                                                    data['userID'],
+                                                    false),
                                           ),
                                         ],
                                       ),
@@ -736,14 +905,12 @@ class _AdminApprovalState extends State<AdminApproval> {
                                   ),
                                 ),
                               );
-
                             }).toList(),
                           ],
                         );
                       }).toList(),
                     ],
                   );
-
                 },
               ),
             ),

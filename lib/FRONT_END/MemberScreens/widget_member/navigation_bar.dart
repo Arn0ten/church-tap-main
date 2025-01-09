@@ -89,7 +89,7 @@ class _HomePageState extends State<HomePage> {
                 Icons.event_available,
                 size: 20,
               ),
-              label: 'Events',
+              label: 'Appointment',
               activeIcon: Text(
                 "",
                 style: TextStyle(
