@@ -6,6 +6,7 @@ import 'package:bethel_app_final/FRONT_END/constant/color.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../authentications/option_to_loginform/option_what_account_to_use.dart';
 
@@ -272,8 +273,21 @@ class _ProfileState extends State<Profile> {
                       TextButton(
                         onPressed: () async {
                           Navigator.of(context).pop(); // Close the dialog
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false, // Prevent closing the dialog
+                            builder: (BuildContext context) {
+                              return Center(
+                                child: LoadingAnimationWidget.staggeredDotsWave(
+                                  color: Colors.green,
+                                  size: 50,
+                                ),
+                              );
+                            },
+                          );
+
                           try {
-                            await FirebaseAuth.instance.signOut(); // Perform sign out
+                            await FirebaseAuth.instance.signOut(); // Perform Firebase sign-out
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
@@ -281,6 +295,7 @@ class _ProfileState extends State<Profile> {
                               ),
                             ); // Navigate to OptionToPlatformToLogin page
                           } catch (e) {
+                            Navigator.of(context).pop(); // Close the loading animation
                             print("Error signing out: $e");
                           }
                         },

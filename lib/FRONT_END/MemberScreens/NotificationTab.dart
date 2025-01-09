@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class NotificationTab extends StatefulWidget {
   const NotificationTab({Key? key});
@@ -122,9 +123,12 @@ class _NotificationTabState extends State<NotificationTab> {
                       stream: _notificationStream,
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.waiting) {
-                          return Center(
-                            child: CircularProgressIndicator(
-                              color: Colors.green.shade200,
+                          return Scaffold(
+                            body: Center(
+                              child: LoadingAnimationWidget.staggeredDotsWave(
+                                color: Colors.green, // Customize the color
+                                size: 50.0, // Customize the size
+                              ),
                             ),
                           );
                         } else if (snapshot.hasError) {

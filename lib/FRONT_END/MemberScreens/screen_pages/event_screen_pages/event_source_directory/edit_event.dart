@@ -289,26 +289,71 @@ class _EditEventState extends State<EditEvent> {
     return ListView(
       padding: const EdgeInsets.all(16.0),
       children: [
-        // Date Picker
-        TextButton(
-          onPressed: () async {
-            final DateTime? pickedDate = await showDatePicker(
-              context: context,
-              initialDate: _selectedDate,
-              firstDate: DateTime(2000),
-              lastDate: DateTime(2100),
-            );
-            if (pickedDate != null && pickedDate != _selectedDate) {
-              setState(() {
-                _selectedDate = pickedDate;
-              });
-            }
-          },
-          child: Text(
-            "Selected Date: ${_selectedDate.month}/${_selectedDate.day}/${_selectedDate.year}",
-            style: TextStyle(fontSize: 16, color: Colors.black),
+        // Enhanced Date Picker
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Pick a Date",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8.0),
+              TextButton(
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                  backgroundColor: Colors.blueAccent.withOpacity(0.1),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                ),
+                onPressed: () async {
+                  final DateTime? pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: _selectedDate,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime(2100),
+                    builder: (BuildContext context, Widget? child) {
+                      return Theme(
+                        data: ThemeData.light().copyWith(
+                          colorScheme: ColorScheme.light(
+                            primary: Colors.blue, // Header background color
+                            onPrimary: Colors.white, // Header text color
+                            onSurface: Colors.black, // Body text color
+                          ),
+                          textButtonTheme: TextButtonThemeData(
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.blue, // Button text color
+                            ),
+                          ),
+                        ),
+                        child: child ?? SizedBox.shrink(),
+                      );
+                    },
+                  );
+                  if (pickedDate != null && pickedDate != _selectedDate) {
+                    setState(() {
+                      _selectedDate = pickedDate;
+                    });
+                  }
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.calendar_today, color: Colors.blue),
+                    SizedBox(width: 8.0),
+                    Text(
+                      "Selected Date: ${_selectedDate.month}/${_selectedDate.day}/${_selectedDate.year}",
+                      style: TextStyle(fontSize: 16, color: Colors.black),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
+
 
         // Dropdown for Event Type
         DropdownButtonFormField<String>(

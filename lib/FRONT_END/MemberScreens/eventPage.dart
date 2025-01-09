@@ -141,7 +141,7 @@ class _EventPageState extends State<EventPage> {
                   icon: const Icon(Icons.sort),
                 ),
                 const Text(
-                  "Events",
+                  "Appoinment/Requests",
                   style: TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.bold,
@@ -185,8 +185,13 @@ class _EventPageState extends State<EventPage> {
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
-                          return const Center(
-                              child: CircularProgressIndicator()
+                          return Scaffold(
+                            body: Center(
+                              child: LoadingAnimationWidget.staggeredDotsWave(
+                                color: Colors.green, // Customize the color
+                                size: 50.0, // Customize the size
+                              ),
+                            ),
                           );
                         }
                         if (snapshot.hasError) {
@@ -360,6 +365,7 @@ class _EventPageState extends State<EventPage> {
                                       overflow: TextOverflow.ellipsis,
                                       maxLines: 2,
                                     ),
+
                                   ],
                                 ),
                               ),
@@ -378,8 +384,14 @@ class _EventPageState extends State<EventPage> {
                 builder: (context, snapshot) {
                   if (snapshot.connectionState ==
                       ConnectionState.waiting) {
-                    return const Center(
-                        child: CircularProgressIndicator());
+                    return Scaffold(
+                      body: Center(
+                        child: LoadingAnimationWidget.staggeredDotsWave(
+                          color: Colors.green, // Customize the color
+                          size: 50.0, // Customize the size
+                        ),
+                      ),
+                    );
                   }
                   if (snapshot.hasError) {
                     return Center(

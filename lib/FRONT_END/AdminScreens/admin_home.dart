@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class AdminHomePage extends StatefulWidget {
   const AdminHomePage({Key? key}) : super(key: key);
@@ -184,7 +185,14 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 stream: _approvedAppointmentsStream,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return Scaffold(
+                      body: Center(
+                        child: LoadingAnimationWidget.staggeredDotsWave(
+                          color: Colors.green, // Customize the color
+                          size: 50.0, // Customize the size
+                        ),
+                      ),
+                    );
                   }
                   if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
@@ -244,13 +252,21 @@ class _AdminHomePageState extends State<AdminHomePage> {
                   fontSize: 20,
                 ),
               ),
+
             ),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: _churchEventsStream,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return Scaffold(
+                      body: Center(
+                        child: LoadingAnimationWidget.staggeredDotsWave(
+                          color: Colors.green, // Customize the color
+                          size: 50.0, // Customize the size
+                        ),
+                      ),
+                    );
                   }
                   if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
@@ -430,6 +446,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
             ),
           ],
         ),
+
       ),
     );
   }
@@ -562,6 +579,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
             ),
           ],
         ),
+
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
