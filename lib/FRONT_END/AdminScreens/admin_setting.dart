@@ -218,7 +218,7 @@ class _AdminSettingsState extends State<AdminSettings> {
                             builder: (BuildContext context) {
                               return Center(
                                 child: LoadingAnimationWidget.staggeredDotsWave(
-                                  color: Colors.green,
+                                  color: appGreen,
                                   size: 50,
                                 ),
                               );

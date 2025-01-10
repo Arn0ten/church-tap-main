@@ -279,7 +279,7 @@ class _ProfileState extends State<Profile> {
                             builder: (BuildContext context) {
                               return Center(
                                 child: LoadingAnimationWidget.staggeredDotsWave(
-                                  color: Colors.green,
+                                  color: appGreen,
                                   size: 50,
                                 ),
                               );

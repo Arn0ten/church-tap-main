@@ -10,6 +10,8 @@
   import 'package:flutter/widgets.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+
+import '../constant/color.dart';
   
   class MemberHomePage extends StatefulWidget {
     const MemberHomePage({Key? key}) : super(key: key);
@@ -195,7 +197,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
                             return Scaffold(
                               body: Center(
                                 child: LoadingAnimationWidget.staggeredDotsWave(
-                                  color: Colors.green, // Customize the color
+                                  color: appGreen, // Customize the color
                                   size: 50.0, // Customize the size
                                 ),
                               ),
