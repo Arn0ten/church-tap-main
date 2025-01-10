@@ -53,7 +53,9 @@ class _EditEventState extends State<EditEvent> {
     });
     _getDocument = fetchdocument(widget.documentId);
     _selectedDate = widget.firstDate;
+    print("Initial Selected Event Type: $_selectedEventType");
   }
+  bool _isDataInitialized = false;
 
   @override
   Widget build(BuildContext context) {
@@ -70,16 +72,20 @@ class _EditEventState extends State<EditEvent> {
               return Center(child: Text('Error: ${snapshot.error}'));
             } else if (snapshot.hasData) {
               final document = snapshot.data as Map<String, dynamic>;
-              // final appointmentDate = (document['date'] as Timestamp).toDate();
-              // _selectedDate = appointmentDate;
-              _descController.text = document['description'] ?? '';
-              final appointmentType = document['appointmenttype'] ?? '';
-              isCustomAppointment = !_eventTypes.contains(appointmentType);
-              if (isCustomAppointment) {
-                _customAppointmentController.text = appointmentType;
-              } else {
-                _selectedEventType = appointmentType;
+
+              if (!_isDataInitialized) {
+                // Initialize data only once
+                _descController.text = document['description'] ?? '';
+                final appointmentType = document['appointmenttype'] ?? '';
+                if (_eventTypes.contains(appointmentType)) {
+                  _selectedEventType = appointmentType;
+                } else {
+                  isCustomAppointment = true;
+                  _customAppointmentController.text = appointmentType;
+                }
+                _isDataInitialized = true; // Mark data as initialized
               }
+
               return _buildForm();
             } else {
               return const Center(child: Text('No data found.'));
@@ -89,6 +95,7 @@ class _EditEventState extends State<EditEvent> {
       ),
     );
   }
+
 
 
   Future<Map<String,dynamic>> fetchdocument(String documentID) async {
@@ -289,20 +296,20 @@ class _EditEventState extends State<EditEvent> {
     return ListView(
       padding: const EdgeInsets.all(16.0),
       children: [
-        // Enhanced Date Picker
+        // Date Picker Section
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 "Pick a Date",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 8.0),
+              const SizedBox(height: 8.0),
               TextButton(
                 style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                  padding: const EdgeInsets.all(12.0),
                   backgroundColor: Colors.blueAccent.withOpacity(0.1),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0),
@@ -317,18 +324,13 @@ class _EditEventState extends State<EditEvent> {
                     builder: (BuildContext context, Widget? child) {
                       return Theme(
                         data: ThemeData.light().copyWith(
-                          colorScheme: ColorScheme.light(
+                          colorScheme: const ColorScheme.light(
                             primary: Colors.blue, // Header background color
                             onPrimary: Colors.white, // Header text color
                             onSurface: Colors.black, // Body text color
                           ),
-                          textButtonTheme: TextButtonThemeData(
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.blue, // Button text color
-                            ),
-                          ),
                         ),
-                        child: child ?? SizedBox.shrink(),
+                        child: child ?? const SizedBox.shrink(),
                       );
                     },
                   );
@@ -339,154 +341,189 @@ class _EditEventState extends State<EditEvent> {
                   }
                 },
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.calendar_today, color: Colors.blue),
-                    SizedBox(width: 8.0),
+                    const Icon(Icons.calendar_today, color: Colors.blue),
+                    const SizedBox(width: 8.0),
                     Text(
                       "Selected Date: ${_selectedDate.month}/${_selectedDate.day}/${_selectedDate.year}",
-                      style: TextStyle(fontSize: 16, color: Colors.black),
+                      style: const TextStyle(fontSize: 16, color: Colors.black),
                     ),
                   ],
                 ),
               ),
+              const Divider(height: 32.0),
+              // Section: Appointment Type
+              const Text(
+                "Appointment Type",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8.0),
             ],
           ),
         ),
 
+        const Divider(),
 
-        // Dropdown for Event Type
-        DropdownButtonFormField<String>(
-          value: _selectedEventType.isNotEmpty ? _selectedEventType : null,
-          onChanged: (String? newValue) {
-            setState(() {
-              _selectedEventType = newValue ?? ''; // Update the selected value
-            });
-          },
-          items: _eventTypes.map((String value) {
-            Icon eventIcon = getAppointmentIcon(value);
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Row(
-                children: [
-                  eventIcon,
-                  const SizedBox(width: 10),
-                  Text(value),
-                ],
-              ),
-            );
-          }).toList(),
+        // Event Type Dropdown
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: DropdownButtonFormField<String>(
+            value: _selectedEventType.isNotEmpty ? _selectedEventType : null,
+            decoration: const InputDecoration(
+              labelText: "Event Type",
+              border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+            ),
+            items: _eventTypes.map((String value) {
+              Icon eventIcon = getAppointmentIcon(value);
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Row(
+                  children: [
+                    eventIcon,
+                    const SizedBox(width: 10),
+                    Text(value),
+                  ],
+                ),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedEventType = newValue ?? '';
+                isCustomAppointment = false; // Explicitly set this to false
+                print('Dropdown updated to: $_selectedEventType');
+              });
+            },
+
+          ),
         ),
 
+        const Divider(),
 
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Or enter custom appointment:',
-              style: TextStyle(fontSize: 16),
-            ),
-            Checkbox(
-              value: isCustomAppointment,
-              onChanged: (bool? value) {
-                setState(() {
-                  isCustomAppointment = value ?? false;
-                  if (!isCustomAppointment) {
-                    _customAppointmentController.clear();
-                  }
-                });
-              },
-            ),
-          ],
+        // Custom Appointment Option
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Custom Appointment',
+                style: TextStyle(fontSize: 16),
+              ),
+              Checkbox(
+                value: isCustomAppointment,
+                onChanged: (bool? value) {
+                  setState(() {
+                    isCustomAppointment = value ?? false;
+                    if (!isCustomAppointment) {
+                      _customAppointmentController.clear();
+                    }
+                  });
+                },
+              ),
+            ],
+          ),
         ),
         if (isCustomAppointment)
-          TextFormField(
-            controller: _customAppointmentController,
-            decoration: const InputDecoration(
-              labelText: "Custom Appointment",
-              border: OutlineInputBorder(),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: TextFormField(
+              controller: _customAppointmentController,
+              decoration: const InputDecoration(
+                labelText: "Enter Custom Appointment",
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+              ),
             ),
           ),
-        const SizedBox(height: 16),
 
-        // Description Text Field
-        TextFormField(
-          controller: _descController,
-          maxLines: 4,
-          decoration: const InputDecoration(
-            labelText: "Description",
-            border: OutlineInputBorder(),
+        const Divider(),
+
+
+        // Section: Description
+        const Text(
+          "Description",
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8.0),
+
+        // Description Field
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: TextFormField(
+            controller: _descController,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.all(16.0),
+            ),
           ),
         ),
-        const SizedBox(height: 16),
+
+        const Divider(),
 
         // Save Button
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-            backgroundColor: appGreen,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              backgroundColor: appGreen,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
             ),
-            elevation: 5,
-          ),
-          onPressed: () async{
-            final newAppointmentType = isCustomAppointment
-                ? _customAppointmentController.text.trim()
-                : _selectedEventType;
+            // Save Button
+            onPressed: () async {
+              final newAppointmentType = isCustomAppointment
+                  ? _customAppointmentController.text.trim()
+                  : _selectedEventType;
 
-            if (newAppointmentType.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Please provide an appointment type.")),
-              );
-              return;
-            }
-            log("Selected Event Type: $_selectedEventType");
-            log("Is Custom Appointment: $isCustomAppointment");
-            log("Custom Appointment Text: ${_customAppointmentController.text}");
+              print('Saving Appointment Type: $newAppointmentType'); // Debug print
+              if (newAppointmentType.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Please provide an appointment type.")),
+                );
+                return;
+              }
 
-            await _saveChanges(newAppointmentType, _descController.text.trim());
-            Navigator.pop(context); // Close the form after saving
-          },
-          child: const Text(
-            "Save",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+              await _saveChanges(newAppointmentType, _descController.text.trim());
+              Navigator.pop(context);
+            },
+            label: const Text(
+              "Save",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),
-
 
       ],
     );
   }
 
+
   Future<List<String>> _fetchEventTypes() async {
     try {
       List<String> eventTypes = [
-        "Sunday Service",
-        "Christmas Service",
-        "Easter Service",
-        "Wedding Ceremony",
-        "Funeral Service",
-        "Baptism",
-        "Communion Service",
-        "Infant Dedication",
-        "Pastoral Visit",
-        "Missionary Work",
-        "Prayer Meeting",
-        "Youth Fellowship",
-        "Bible Study",
-        "Church Anniversary",
-        "Community Outreach",
-        "Choir Practice",
-        "Fellowship Meal",
-        "Anniversary Service",
-        "Membership Cericate",
-        "Baptismal Certificate",
+        'Funeral Service',
+        'Wedding Ceremony',
+        'Sunday Service',
+        'Christmas Service',
+        'Easter Service',
+        'Baptism',
+        'Communion Service',
+        'Church Anniversary',
+        'Infant Dedication',
+        'Pastoral Visit',
+        'Prayer Meeting',
+        'Community Outreach',
+        'Youth Fellowship',
+        'Bible Study',
+        'Fellowship Meal',
       ];
       return eventTypes;
     } catch (e) {
@@ -500,8 +537,10 @@ class _EditEventState extends State<EditEvent> {
   Future<void> _saveChanges(String appointmentType, String description) async {
     try {
       final data = {
-        'appointmenttype': appointmentType,
-        'description': description,
+        'description': _descController.text,
+        'appointmenttype': isCustomAppointment
+            ? _customAppointmentController.text
+            : _selectedEventType,
         'date': _selectedDate,
       };
 

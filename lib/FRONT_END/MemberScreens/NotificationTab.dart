@@ -80,7 +80,20 @@ class _NotificationTabState extends State<NotificationTab> {
     });
   }
 
-
+  Future<void> markNotificationAsRead(String uid, String documentId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc("members")
+          .collection(uid)
+          .doc("Event")
+          .collection("Notification")
+          .doc(documentId)
+          .update({"isRead": true});
+    } catch (e) {
+      print('Error marking notification as read: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
