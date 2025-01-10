@@ -320,6 +320,8 @@ class _AdminApprovalState extends State<AdminApproval> {
                       ),
                     );
                   }
+
+
                   // Sort appointments by month
                   List<DocumentSnapshot> sortedAppointments =
                       sortAppointmentsByMonth(snapshot.data!);
@@ -423,6 +425,7 @@ class _AdminApprovalState extends State<AdminApproval> {
                       groupAppointmentsByDate(sortedAppointments);
 
                   Map<String, double> highestPriorityByDate = {};
+
 
                   // First, calculate the highest priority for each date
                   groupedAppointments.forEach((dateKey, appointments) {
