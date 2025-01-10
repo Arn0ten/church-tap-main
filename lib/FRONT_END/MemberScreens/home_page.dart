@@ -403,14 +403,26 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
                                                             ],
                                                           ),
                                                           const SizedBox(height: 4),
-                                                          Text(
-                                                            'Date: $formattedDate',
-                                                            style: const TextStyle(fontSize: 14, color: Colors.grey),
+                                                          const Text(
+                                                            'By: Admin/Church',
+                                                            style: TextStyle(fontSize: 14, color: Colors.grey),
                                                           ),
                                                           const SizedBox(height: 8),
                                                           Text(
                                                             'Description: ${event['description'] ?? ''}',
                                                             style: const TextStyle(fontSize: 14, color: Colors.black87),
+                                                          ),
+                                                          const SizedBox(height: 4),
+                                                          Row(
+                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                                                            children: [
+                                                              const SizedBox(height: 4),
+                                                              Text(
+                                                                'Date: $formattedDate',
+                                                                style: const TextStyle(fontSize: 14, color: Colors.grey),
+                                                              ),
+                                                            ],
                                                           ),
                                                         ],
                                                       ),
