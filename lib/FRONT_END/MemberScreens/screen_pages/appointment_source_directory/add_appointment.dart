@@ -370,7 +370,7 @@ class _AddAppointmentState extends State<AddAppointment> {
       case 'Christmas Service':
         return Icon(FontAwesomeIcons.church, color: Colors.pink.shade800);
       case 'Easter Service':
-        return const Icon(FontAwesomeIcons.egg, color: Colors.white);
+        return const Icon(FontAwesomeIcons.egg, color: Colors.deepPurple);
 
     // Ceremonies
       case 'Wedding Ceremony':
@@ -383,7 +383,7 @@ class _AddAppointmentState extends State<AddAppointment> {
       case 'Baptism':
       case 'Communion Service':
       case 'Infant Dedication':
-        return Icon(FontAwesomeIcons.dove, color: Colors.grey.shade300);
+        return Icon(FontAwesomeIcons.dove, color: Colors.deepPurple);
 
     // Visits and Missionary Work
       case 'Pastoral Visit':
