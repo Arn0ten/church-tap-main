@@ -613,11 +613,7 @@ class _EditEventState extends State<EditEvent> {
       }
 
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar( content: const Text('Updated successfully!'),
-          backgroundColor: Colors.blue,
-          duration: const Duration(seconds: 2),),
-      );
+
     } catch (e) {
       log("Error updating appointment: $e");
       ScaffoldMessenger.of(context).showSnackBar(

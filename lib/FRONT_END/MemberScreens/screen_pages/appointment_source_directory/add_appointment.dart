@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../../../constant/color.dart';
 
@@ -71,12 +70,7 @@ class _AddAppointmentState extends State<AddAppointment> {
           future: _fetchAppointmentTypes(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
-                child: LoadingAnimationWidget.staggeredDotsWave(
-                  color: appGreen, // Customize the color
-                  size: 50.0, // Customize the size
-                ),
-              );
+              return const Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
               return Center(child: Text('Error: ${snapshot.error}'));
             } else {
@@ -254,68 +248,47 @@ class _AddAppointmentState extends State<AddAppointment> {
             alignment: Alignment.center,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                 backgroundColor: appGreen,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+                  borderRadius: BorderRadius.circular(20),
                 ),
+                elevation: 5,
               ),
               onPressed: () async {
-                if (_descController.text.isEmpty) {
-                  setState(() {
-                    _isDescriptionValid = false; // Set validation state to false
-                  });
-                  // Focus on the description field if it's invalid
-                  _descFocusNode.requestFocus();
-                } else {
-                  setState(() {
-                    _isDescriptionValid = true; // Reset validation state
-                  });
+                // Show confirmation dialog before saving
+                bool shouldSave = await showDialog<bool>(
+                  context: context,
+                  barrierDismissible: false, // Dialog cannot be dismissed by tapping outside
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text("Confirm Save"),
+                      content: const Text("Are you sure you want to save this appointment?"),
+                      actions: <Widget>[
+                        TextButton(
+                          child: const Text("Cancel"),
+                          onPressed: () {
+                            Navigator.of(context).pop(false); // Return false if canceled
+                          },
+                        ),
+                        TextButton(
+                          child: const Text("Confirm"),
+                          onPressed: () {
+                            Navigator.of(context).pop(true); // Return true if confirmed
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                ) ?? false;
 
-                  bool shouldSave = await showDialog<bool>(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: const Text("Confirm Save"),
-                        content: const Text("Are you sure you want to save this appointment?"),
-                        actions: <Widget>[
-                          TextButton(
-                            child: const Text("Cancel"),
-                            onPressed: () {
-                              Navigator.of(context).pop(false);
-                            },
-                          ),
-                          TextButton(
-                            child: const Text("Confirm"),
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                              Navigator.pop(context, true);
-                              Get.back();
-
-                              // Clear the form fields
-                              _descController.clear();
-                              setState(() {
-                                _selectedAppointmentType = ''; // Reset appointment type
-                              });
-                            },
-                          ),
-                        ],
-                      );
-                    },
-                  ) ?? false;
-
-                  if (shouldSave) {
-                    if (isCustomAppointmentNotifier.value) {
-                      _selectedAppointmentType = _customAppointmentController.text;
-                    }
-                    _addAppointment(_selectedDate, _selectedAppointmentType);
-
-
+                if (shouldSave) {
+                  if (isCustomAppointmentNotifier.value) {
+                    _selectedAppointmentType = _customAppointmentController.text;
                   }
+                  _addAppointment(_selectedDate, _selectedAppointmentType);
                 }
               },
-
               child: const Text(
                 "Save",
                 style: TextStyle(
@@ -326,7 +299,6 @@ class _AddAppointmentState extends State<AddAppointment> {
               ),
             ),
           ),
-
 
         ],
       ),
@@ -370,7 +342,7 @@ class _AddAppointmentState extends State<AddAppointment> {
       case 'Christmas Service':
         return Icon(FontAwesomeIcons.church, color: Colors.pink.shade800);
       case 'Easter Service':
-        return const Icon(FontAwesomeIcons.egg, color: Colors.deepPurple);
+        return const Icon(FontAwesomeIcons.egg, color: Colors.purple);
 
     // Ceremonies
       case 'Wedding Ceremony':
@@ -383,7 +355,7 @@ class _AddAppointmentState extends State<AddAppointment> {
       case 'Baptism':
       case 'Communion Service':
       case 'Infant Dedication':
-        return Icon(FontAwesomeIcons.dove, color: Colors.deepPurple);
+        return Icon(FontAwesomeIcons.dove, color: Colors.purple);
 
     // Visits and Missionary Work
       case 'Pastoral Visit':
@@ -434,31 +406,14 @@ class _AddAppointmentState extends State<AddAppointment> {
     // Check if description or appointment type is empty
     if (_descController.text.isEmpty || _selectedAppointmentType.isEmpty) {
       print('Please fill in all fields.');
-      // Show a Snackbar for missing fields
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill in all fields.'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 2),
-        ),
-      );
       return;
     }
 
     tapAuth = TapAuth();
     userStorage = UserStorage();
     final description = _descController.text;
-
     if (tapAuth.getCurrentUserUID() == null) {
       print('No user is currently signed in');
-      // Show a Snackbar for no user being signed in
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No user is currently signed in.'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 2),
-        ),
-      );
       return;
     }
 
@@ -477,30 +432,36 @@ class _AddAppointmentState extends State<AddAppointment> {
       "email": tapAuth.auth.currentUser!.email,
     };
 
-    try {
-      // Assuming the method to create the event is successful
-      await userStorage.createMemberEvent(
-          tapAuth.getCurrentUserUID(), page, widget.type);
-
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Added successfully!'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
-    } catch (e) {
-      // Show failure message if an error occurs
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to add appointment.'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
+    userStorage.createMemberEvent(
+        tapAuth.getCurrentUserUID(), page, widget.type);
+    _showSuccessDialog();
   }
 
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Success'),
+          content: const Text('Appointment saved successfully.'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.pop(context, true);
+                Get.back();
 
+                // Clear the form fields
+                _descController.clear();
+                setState(() {
+                  _selectedAppointmentType = ''; // Reset appointment type
+                });
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
