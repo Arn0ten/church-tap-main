@@ -438,11 +438,27 @@ class _AdminHomePageState extends State<AdminHomePage> {
               'Date: $formattedDate',
             ),
             const SizedBox(height: 4),
-            Text(
-              'Description: ${data['description'] ?? ''}',
-              style: const TextStyle(fontSize: 14, color: Colors.black87),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 2,
+            Text.rich(
+              TextSpan(
+                children: [
+                  const TextSpan(
+                    text: 'Description:  ',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  TextSpan(
+                    text: '${data['description'] ?? ''}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.black87,
+
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -571,11 +587,28 @@ class _AdminHomePageState extends State<AdminHomePage> {
               'Date: $formattedDate',
             ),
             const SizedBox(height: 4),
-            Text(
-              'Description: ${data['description'] ?? ''}',
-              style: const TextStyle(fontSize: 14, color: Colors.black87),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 2,
+            Text.rich(
+              TextSpan(
+                children: [
+                  const TextSpan(
+                    text: 'Description:  ',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  TextSpan(
+                    text: '${data['description'] ?? ''}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+              maxLines: 2,  // Limits to 2 lines
+              overflow: TextOverflow.ellipsis,  // Adds ellipsis if the text exceeds 2 lines
             ),
           ],
         ),

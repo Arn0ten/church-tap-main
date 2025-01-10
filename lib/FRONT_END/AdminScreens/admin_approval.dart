@@ -718,14 +718,28 @@ class _AdminApprovalState extends State<AdminApproval> {
                                                         ),
                                                         const SizedBox(
                                                             height: 8),
-                                                        Text(
-                                                          'Description: ${data['description'] ?? ''}',
-                                                          style:
-                                                              const TextStyle(
+                                                        Text.rich(
+                                                          TextSpan(
+                                                            children: [
+                                                              const TextSpan(
+                                                                text: 'Description:  ',
+                                                                style: TextStyle(
+                                                                  fontSize: 17,
+                                                                  fontWeight: FontWeight.bold,
+                                                                  color: Colors.black87,
+                                                                ),
+                                                              ),
+                                                              TextSpan(
+                                                                text: '${data['description'] ?? ''}',
+                                                                style: const TextStyle(
                                                                   fontSize: 14,
-                                                                  color: Colors
-                                                                      .black87),
+                                                                  color: Colors.black87,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
                                                         ),
+
                                                         const SizedBox(
                                                             height: 16),
                                                         if (isHighestPriority)
@@ -866,14 +880,30 @@ class _AdminApprovalState extends State<AdminApproval> {
                                                   color: Colors.grey),
                                             ),
                                             const SizedBox(height: 4),
-                                            Text(
-                                              'Description: ${data['description'] ?? ''}',
-                                              style: const TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.black87),
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 2,
+                                            Text.rich(
+                                              TextSpan(
+                                                children: [
+                                                  const TextSpan(
+                                                    text: 'Description:  ',
+                                                    style: TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.black87,
+                                                    ),
+                                                  ),
+                                                  TextSpan(
+                                                    text: '${data['description'] ?? ''}',
+                                                    style: const TextStyle(
+                                                      fontSize: 14,
+                                                      color: Colors.black87,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              maxLines: 2,  // Limits to 2 lines
+                                              overflow: TextOverflow.ellipsis,  // Adds ellipsis if the text exceeds 2 lines
                                             ),
+
                                           ],
                                         ),
                                       ),
