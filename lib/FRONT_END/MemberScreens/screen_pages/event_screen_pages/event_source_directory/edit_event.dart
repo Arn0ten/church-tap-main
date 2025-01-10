@@ -26,7 +26,7 @@ class EditEvent extends StatefulWidget {
 }
 
 class _EditEventState extends State<EditEvent> {
-  late Future _getDocument;
+  late Future<Map<String, dynamic>> _getDocument;
   int count = 0;
   DateTime _selectedDate = DateTime.now();
   final _descController = TextEditingController();
@@ -35,11 +35,13 @@ class _EditEventState extends State<EditEvent> {
   UserStorage storage = UserStorage();
   TapAuth auth = TapAuth();
   bool isCustomAppointment = false;
+
   final TextEditingController _customAppointmentController = TextEditingController();
 
   @override
   void dispose() {
-    _customAppointmentController.dispose(); // Dispose of the controller to free resources
+    _descController.dispose();
+    _customAppointmentController.dispose();
     super.dispose();
   }
 
@@ -53,10 +55,10 @@ class _EditEventState extends State<EditEvent> {
     });
     _getDocument = fetchdocument(widget.documentId);
     _selectedDate = widget.firstDate;
-    print("Initial Selected Event Type: $_selectedEventType");
   }
   bool _isDataInitialized = false;
 
+  @override
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -83,6 +85,7 @@ class _EditEventState extends State<EditEvent> {
                   isCustomAppointment = true;
                   _customAppointmentController.text = appointmentType;
                 }
+                _selectedDate = (document['date'] as Timestamp?)?.toDate() ?? widget.firstDate;
                 _isDataInitialized = true; // Mark data as initialized
               }
 
@@ -325,9 +328,9 @@ class _EditEventState extends State<EditEvent> {
                       return Theme(
                         data: ThemeData.light().copyWith(
                           colorScheme: const ColorScheme.light(
-                            primary: Colors.blue, // Header background color
-                            onPrimary: Colors.white, // Header text color
-                            onSurface: Colors.black, // Body text color
+                            primary: Colors.blue,
+                            onPrimary: Colors.white,
+                            onSurface: Colors.black,
                           ),
                         ),
                         child: child ?? const SizedBox.shrink(),
@@ -345,12 +348,13 @@ class _EditEventState extends State<EditEvent> {
                     const Icon(Icons.calendar_today, color: Colors.blue),
                     const SizedBox(width: 8.0),
                     Text(
-                      "Selected Date: ${_selectedDate.month}/${_selectedDate.day}/${_selectedDate.year}",
-                      style: const TextStyle(fontSize: 16, color: Colors.black),
+                      "${_selectedDate.toLocal()}".split(' ')[0], // Display selected date
+                      style: const TextStyle(color: Colors.black),
                     ),
                   ],
                 ),
               ),
+
               const Divider(height: 32.0),
               // Section: Appointment Type
               const Text(
