@@ -69,7 +69,7 @@ class _MemberLoginPageState extends State<MemberLoginPage> {
               elevation: 0,
               child: Center(
                 child: LoadingAnimationWidget.staggeredDotsWave(
-                  color: Colors.green,
+                  color: appGreen,
                   size: 50,
                 ),
               ),

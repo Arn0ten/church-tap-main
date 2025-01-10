@@ -188,7 +188,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                     return Scaffold(
                       body: Center(
                         child: LoadingAnimationWidget.staggeredDotsWave(
-                          color: Colors.green, // Customize the color
+                          color: appGreen, // Customize the color
                           size: 50.0, // Customize the size
                         ),
                       ),
@@ -262,7 +262,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                     return Scaffold(
                       body: Center(
                         child: LoadingAnimationWidget.staggeredDotsWave(
-                          color: Colors.green, // Customize the color
+                          color: appGreen, // Customize the color
                           size: 50.0, // Customize the size
                         ),
                       ),

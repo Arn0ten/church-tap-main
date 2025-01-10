@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class EditEvent extends StatefulWidget {
   final DateTime firstDate;
@@ -69,7 +70,12 @@ class _EditEventState extends State<EditEvent> {
           future: _getDocument,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return Center(
+                child: LoadingAnimationWidget.staggeredDotsWave(
+                  color: appGreen, // Customize the color
+                  size: 50.0, // Customize the size
+                ),
+              );
             } else if (snapshot.hasError) {
               return Center(child: Text('Error: ${snapshot.error}'));
             } else if (snapshot.hasData) {
@@ -491,8 +497,44 @@ class _EditEventState extends State<EditEvent> {
                 return;
               }
 
-              await _saveChanges(newAppointmentType, _descController.text.trim());
-              Navigator.pop(context);
+              // Show confirmation dialog before saving
+              bool shouldSave = await showDialog<bool>(
+                context: context,
+                barrierDismissible: false, // Dialog cannot be dismissed by tapping outside
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text("Confirm Save"),
+                    content: const Text("Are you sure you want to save this appointment type?"),
+                    actions: <Widget>[
+                      TextButton(
+                        child: const Text("Cancel"),
+                        onPressed: () {
+                          Navigator.of(context).pop(false); // Return false if canceled
+                        },
+                      ),
+                      TextButton(
+                        child: const Text("Confirm"),
+                        onPressed: () {
+                          Navigator.of(context).pop(true); // Return true if confirmed
+                        },
+                      ),
+                    ],
+                  );
+                },
+              ) ?? false;
+
+              if (shouldSave) {
+                await _saveChanges(newAppointmentType, _descController.text.trim());
+                Navigator.pop(context);
+                // Show Snackbar indicating the appointment is added
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Updated successfully!'),
+                    backgroundColor: Colors.blue,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
             },
             label: const Text(
               "Save",
@@ -504,6 +546,7 @@ class _EditEventState extends State<EditEvent> {
             ),
           ),
         ),
+
 
       ],
     );
@@ -569,13 +612,18 @@ class _EditEventState extends State<EditEvent> {
             .update(data);
       }
 
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Appointment updated successfully!")),
+        const SnackBar( content: const Text('Updated successfully!'),
+          backgroundColor: Colors.blue,
+          duration: const Duration(seconds: 2),),
       );
     } catch (e) {
       log("Error updating appointment: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to update appointment.")),
+        const SnackBar(content: Text("Failed to update appointment."),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),),
       );
     }
   }

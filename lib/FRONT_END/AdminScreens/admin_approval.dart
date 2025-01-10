@@ -253,7 +253,7 @@ class _AdminApprovalState extends State<AdminApproval> {
       return Scaffold(
         body: Center(
           child: LoadingAnimationWidget.staggeredDotsWave(
-            color: Colors.blue, // Customize the color
+            color: appGreen, // Customize the color
             size: 50.0, // Customize the size
           ),
         ),
@@ -304,7 +304,7 @@ class _AdminApprovalState extends State<AdminApproval> {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Center(
                       child: LoadingAnimationWidget.staggeredDotsWave(
-                        color: Colors.green, // Customize the color
+                        color: appGreen, // Customize the color
                         size: 50.0, // Customize the size
                       ),
                     );
