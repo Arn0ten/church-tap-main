@@ -34,6 +34,7 @@ class _EventPageState extends State<EventPage> {
   void initState() {
     super.initState();
     _initializeStream();
+
   }
 
   Future<void> _initializeStream() async {
@@ -141,7 +142,7 @@ class _EventPageState extends State<EventPage> {
                   icon: const Icon(Icons.sort),
                 ),
                 const Text(
-                  "Appoinment/Requests",
+                  "Requests",
                   style: TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.bold,

@@ -62,206 +62,212 @@ class _AddAppointmentState extends State<AddAppointment> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Add Appointment")),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _fetchAppointmentTypes(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else {
-            return _buildForm();
-          }
-        },
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: FutureBuilder<List<Map<String, dynamic>>>(
+          future: _fetchAppointmentTypes(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else {
+              return _buildForm();
+            }
+          },
+        ),
       ),
     );
   }
 
   Widget _buildForm() {
-    return ListView(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
-      children: [
-// Date Picker
-        // Enhanced Date Picker
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Pick a Date",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section: Date Picker
+          const Text(
+            "Pick a Date",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8.0),
+          TextButton(
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
+              backgroundColor: Colors.blueAccent.withOpacity(0.1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
               ),
-              SizedBox(height: 8.0),
-              TextButton(
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-                  backgroundColor: Colors.blueAccent.withOpacity(0.1),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
+            ),
+            onPressed: () async {
+              final DateTime? pickedDate = await showDatePicker(
+                context: context,
+                initialDate: _selectedDate,
+                firstDate: DateTime.now(),
+                lastDate: DateTime(2100),
+                builder: (BuildContext context, Widget? child) {
+                  return Theme(
+                    data: ThemeData.light().copyWith(
+                      colorScheme: const ColorScheme.light(
+                        primary: Colors.blue,
+                        onPrimary: Colors.white,
+                        onSurface: Colors.black,
+                      ),
+                      textButtonTheme: TextButtonThemeData(
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.blue,
+                        ),
+                      ),
+                    ),
+                    child: child ?? const SizedBox.shrink(),
+                  );
+                },
+              );
+              if (pickedDate != null && pickedDate != _selectedDate) {
+                setState(() {
+                  _selectedDate = pickedDate;
+                });
+              }
+            },
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_today, color: Colors.blue),
+                const SizedBox(width: 10.0),
+                Expanded(
+                  child: Text(
+                    "Selected Date: ${_selectedDate.month}/${_selectedDate.day}/${_selectedDate.year}",
+                    style: const TextStyle(fontSize: 16, color: Colors.black),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                onPressed: () async {
-                  final DateTime? pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: _selectedDate,
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime(2100),
-                    builder: (BuildContext context, Widget? child) {
-                      return Theme(
-                        data: ThemeData.light().copyWith(
-                          colorScheme: ColorScheme.light(
-                            primary: Colors.blue, // Header background color
-                            onPrimary: Colors.white, // Header text color
-                            onSurface: Colors.black, // Body text color
-                          ),
-                          textButtonTheme: TextButtonThemeData(
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.blue, // Button text color
-                            ),
-                          ),
-                        ),
-                        child: child ?? SizedBox.shrink(),
-                      );
-                    },
-                  );
-                  if (pickedDate != null && pickedDate != _selectedDate) {
-                    setState(() {
-                      _selectedDate = pickedDate;
-                    });
-                  }
-                },
+              ],
+            ),
+          ),
+          const Divider(height: 32.0),
+          // Section: Appointment Type
+          const Text(
+            "Appointment Type",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8.0),
+          const Divider(),
+          DropdownButtonFormField<String>(
+            value: isCustomAppointment ? null : _selectedAppointmentType,
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedAppointmentType = newValue ?? '';
+                isCustomAppointment = false;
+              });
+            },
+            items: _appointmentType.map((Map<String, dynamic> value) {
+              return DropdownMenuItem<String>(
+                value: value['type'],
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.calendar_today, color: Colors.blue),
-                    SizedBox(width: 8.0),
-                    Text(
-                      "Selected Date: ${_selectedDate.month}/${_selectedDate.day}/${_selectedDate.year}",
-                      style: TextStyle(fontSize: 16, color: Colors.black),
-                    ),
+                    getAppointmentIcon(value['type']),
+                    const SizedBox(width: 10),
+                    Text(value['type']),
                   ],
                 ),
+
+              );
+            }).toList(),
+
+            decoration: InputDecoration(
+              border: OutlineInputBorder(),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
+            ),
+          ),
+          const Divider(),
+          const SizedBox(height: 16.0),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "Or enter custom appointment:",
+                style: TextStyle(fontSize: 16),
+              ),
+              ValueListenableBuilder<bool>(
+                valueListenable: isCustomAppointmentNotifier,
+                builder: (context, isCustomAppointment, child) {
+                  return Checkbox(
+                    value: isCustomAppointment,
+                    onChanged: (bool? value) {
+                      isCustomAppointmentNotifier.value = value ?? false;
+                      if (!isCustomAppointmentNotifier.value) {
+                        _customAppointmentController.clear();
+                      }
+                    },
+                  );
+                },
               ),
             ],
           ),
-        ),
-
-
-        const SizedBox(height: 16.0),
-        DropdownButtonFormField<String>(
-          value: isCustomAppointment ? null : _selectedAppointmentType,
-          onChanged: (String? newValue) {
-            setState(() {
-              _selectedAppointmentType = newValue ?? '';
-              isCustomAppointment = false; // Reset custom appointment field
-            });
-          },
-          items: _appointmentType.map((Map<String, dynamic> value) {
-            return DropdownMenuItem<String>(
-              value: value['type'],
-              child: Row(
-                children: [
-                  getAppointmentIcon(value['type']),
-                  const SizedBox(width: 10),
-                  Text('${value['type']}'),
-                ],
-              ),
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: 16.0),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Or enter custom appointment:',
-              style: TextStyle(fontSize: 16),
-            ),
-            ValueListenableBuilder<bool>(
-              valueListenable: isCustomAppointmentNotifier,
-              builder: (context, isCustomAppointment, child) {
-                return Checkbox(
-                  value: isCustomAppointment,
-                  onChanged: (bool? value) {
-                    isCustomAppointmentNotifier.value = value ?? false;
-                    if (!isCustomAppointmentNotifier.value) {
-                      _customAppointmentController.clear();
-                    }
-                  },
-                );
-              },
-            ),
-          ],
-        ),
-        ValueListenableBuilder<bool>(
-          valueListenable: isCustomAppointmentNotifier,
-          builder: (context, isCustomAppointment, child) {
-            return isCustomAppointment
-                ? TextField(
-              controller: _customAppointmentController,
-              decoration: const InputDecoration(
-                labelText: 'Custom Appointment',
-                border: OutlineInputBorder(),
-              ),
-            )
-                : Container();
-          },
-        ),
-        if (isCustomAppointment)
-          TextField(
-            controller: _customAppointmentController,
-            decoration: const InputDecoration(
-              labelText: 'Custom Appointment',
-              border: OutlineInputBorder(),
-            ),
-            onChanged: (value) {
-              setState(() {
-                _selectedAppointmentType = value;
-              });
+          ValueListenableBuilder<bool>(
+            valueListenable: isCustomAppointmentNotifier,
+            builder: (context, isCustomAppointment, child) {
+              return isCustomAppointment
+                  ? TextField(
+                controller: _customAppointmentController,
+                decoration: const InputDecoration(
+                  labelText: "Custom Appointment",
+                  border: OutlineInputBorder(),
+                ),
+              )
+                  : const SizedBox.shrink();
             },
           ),
-        const SizedBox(height: 16.0),
-        TextField(
-          controller: _descController,
-          maxLines: 5,
-          decoration: const InputDecoration(
-            labelText: 'Description',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        const SizedBox(height: 16.0),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-            backgroundColor: appGreen,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            elevation: 5,
-          ),
-          onPressed: () {
-            // If the custom appointment is checked, use its value
-            if (isCustomAppointmentNotifier.value) {
-              _selectedAppointmentType = _customAppointmentController.text;
-            }
+          const Divider(height: 32.0),
 
-            // Call the save function with the selected date and appointment type
-            _addAppointment(_selectedDate, _selectedAppointmentType);
-          },
-          child: const Text(
-            "Save",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+          // Section: Description
+          const Text(
+            "Description",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8.0),
+          TextField(
+            controller: _descController,
+            maxLines: 5,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
             ),
           ),
-        ),
+          const SizedBox(height: 32.0),
 
-      ],
+          // Save Button
+          Align(
+            alignment: Alignment.center,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                backgroundColor: appGreen,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                elevation: 5,
+              ),
+              onPressed: () {
+                if (isCustomAppointmentNotifier.value) {
+                  _selectedAppointmentType = _customAppointmentController.text;
+                }
+                _addAppointment(_selectedDate, _selectedAppointmentType);
+              },
+              child: const Text(
+                "Save",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
+
 
   Future<List<Map<String, dynamic>>> _fetchAppointmentTypes() async {
     try {
