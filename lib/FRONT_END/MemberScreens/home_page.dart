@@ -410,25 +410,27 @@ import '../constant/color.dart';
                                                             style: TextStyle(fontSize: 14, color: Colors.grey),
                                                           ),
                                                           const SizedBox(height: 8),
-                                                          Text.rich(
-                                                            TextSpan(
-                                                              children: [
-                                                                const TextSpan(
-                                                                  text: 'Description:  ',
-                                                                  style: TextStyle(
-                                                                    fontSize: 16,
-                                                                    fontWeight: FontWeight.bold,
-                                                                    color: Colors.black87,
+                                                          SingleChildScrollView(
+                                                            child: Text.rich(
+                                                              TextSpan(
+                                                                children: [
+                                                                  const TextSpan(
+                                                                    text: 'Description:  ',
+                                                                    style: TextStyle(
+                                                                      fontSize: 16,
+                                                                      fontWeight: FontWeight.bold,
+                                                                      color: Colors.black87,
+                                                                    ),
                                                                   ),
-                                                                ),
-                                                                TextSpan(
-                                                                  text: '${event['description'] ?? ''}',
-                                                                  style: const TextStyle(
-                                                                    fontSize: 14,
-                                                                    color: Colors.black87,
+                                                                  TextSpan(
+                                                                    text: '${event['description'] ?? ''}',
+                                                                    style: const TextStyle(
+                                                                      fontSize: 14,
+                                                                      color: Colors.black87,
+                                                                    ),
                                                                   ),
-                                                                ),
-                                                              ],
+                                                                ],
+                                                              ),
                                                             ),
                                                           ),
                                                           const SizedBox(height: 4),

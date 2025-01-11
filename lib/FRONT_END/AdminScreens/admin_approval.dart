@@ -105,6 +105,7 @@ class _AdminApprovalState extends State<AdminApproval> {
     }
   }
 
+
   Future<void> _performDenyAppointment(
       String appointmentId, String userID) async {
     try {
@@ -158,7 +159,7 @@ class _AdminApprovalState extends State<AdminApproval> {
     });
     return appointments;
   }
-
+///////////////////////////////////////////////////////////////////////
 // Group appointments by date
   Map<String, List<DocumentSnapshot>> groupAppointmentsByDate(
       List<DocumentSnapshot> appointments) {
@@ -219,6 +220,8 @@ class _AdminApprovalState extends State<AdminApproval> {
       "Men": 3.8,
       "Vacation": 3.7,
       "Marriage": 3.7,
+      "Community": 7.2,
+      "Pastoral": 7.4,
     };
 
     // Check if the appointment type is in the known priorities map
