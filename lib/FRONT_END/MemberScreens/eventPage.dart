@@ -165,236 +165,340 @@ class _EventPageState extends State<EventPage> {
               const Divider(
                 color: Colors.green,
               ),
+              const SizedBox(height: 50,
+                child: Padding(
+                  padding: EdgeInsets.only(top: 2,bottom: 2),
+                  child: Text(
+                    'Approved Appointment',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                ),
+              ),
 
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Text(
-                        'Approved requests',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: _approvedAppointmentsStream,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Scaffold(
+                        body: Center(
+                          child: LoadingAnimationWidget.staggeredDotsWave(
+                            color: appGreen, // Customize the color
+                            size: 50.0, // Customize the size
+                          ),
                         ),
-                      ),
-                    ),
-                    Expanded(
-                      child: StreamBuilder<QuerySnapshot>(
-                        stream: _approvedAppointmentsStream,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return Scaffold(
-                              body: Center(
-                                child: LoadingAnimationWidget.staggeredDotsWave(
-                                  color: appGreen, // Customize the color
-                                  size: 50.0, // Customize the size
-                                ),
+                      );
+                    }
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No approved appointment...',
+                          style: TextStyle(fontSize: 18, color: appGrey),
+                        ),
+                      );
+                    }
+
+                    List<DocumentSnapshot> sortedAppointments = snapshot.data!.docs;
+                    if (sortByMonth) {
+                      sortedAppointments = sortAppointmentsByMonth(snapshot.data!);
+                    } else if (sortByDay) {
+                      sortedAppointments = sortAppointmentsByDay(snapshot.data!.docs);
+                    }
+                    sortedAppointments = sortedAppointments.where((document) =>
+                    !isAppointmentCompleted((document.data() as Map<String, dynamic>)["date"].toDate()))
+                        .toList();
+
+                    return ListView.builder(
+                      itemCount: sortedAppointments.length,
+                      itemBuilder: (context, index) {
+                        final document = sortedAppointments[index];
+                        final id = document.id;
+                        Map<String, dynamic> data = document.data() as Map<String, dynamic>;
+                        Timestamp timeStamp = data["date"];
+                        DateTime dateTime = timeStamp.toDate();
+                        List<String> months = [
+                          "January", "February", "March", "April", "May", "June", "July",
+                          "August", "September", "October", "November", "December"
+                        ];
+                        String formattedDate = "${months[dateTime.month - 1]} ${dateTime.day}, ${dateTime.year}";
+
+                        // Function to return an appropriate icon based on the appointment type
+                        Icon getAppointmentIcon(String appointmentType) {
+                          switch (appointmentType) {
+                          // Religious Services
+                            case 'Sunday Service':
+                            case 'Christmas Service':
+                              return Icon(FontAwesomeIcons.church,
+                                  color: Colors.pink.shade800);
+                            case 'Easter Service':
+                              return const Icon(FontAwesomeIcons.egg,
+                                  color: Colors.white);
+
+                          // Ceremonies
+                            case 'Wedding Ceremony':
+                              return Icon(FontAwesomeIcons.heart,
+                                  color: Colors.red.shade800);
+                            case 'Funeral Service':
+                              return Icon(
+                                  FontAwesomeIcons.skullCrossbones,
+                                  color: Colors.grey.shade800);
+
+                          // Baptism and Communion
+                            case 'Baptism':
+                            case 'Communion Service':
+                            case 'Infant Dedication':
+                              return Icon(FontAwesomeIcons.dove,
+                                  color: Colors.grey.shade300);
+
+                          // Visits and Missionary Work
+                            case 'Pastoral Visit':
+                            case 'Missionary Work':
+                              return Icon(FontAwesomeIcons.businessTime,
+                                  color: Colors.blue.shade800);
+
+                          // Prayer and Fellowship
+                            case 'Prayer Meeting':
+                              return Icon(FontAwesomeIcons.handsPraying,
+                                  color: Colors.teal.shade800);
+                            case 'Youth Fellowship':
+                            case 'Bible Study':
+                              return Icon(FontAwesomeIcons.bookOpen,
+                                  color: Colors.orange.shade800);
+
+                          // Church and Community
+                            case 'Church Anniversary':
+                            case 'Community Outreach':
+                              return Icon(FontAwesomeIcons.peopleCarryBox,
+                                  color: Colors.purple.shade800);
+
+                          // Music and Choir
+                            case 'Choir Practice':
+                              return Icon(FontAwesomeIcons.music,
+                                  color: Colors.green.shade800);
+
+                          // Meals and Socials
+                            case 'Fellowship Meal':
+                              return Icon(FontAwesomeIcons.utensils,
+                                  color: Colors.brown.shade800);
+                            case 'Anniversary Service':
+                              return Icon(FontAwesomeIcons.cakeCandles,
+                                  color: Colors.yellow.shade800);
+
+                          // Certificates
+                            case 'Membership Certificate':
+                            case 'Baptismal Certificate':
+                              return Icon(FontAwesomeIcons.idCard,
+                                  color: Colors.blueGrey.shade800);
+
+                          // Birthday Service
+                            case 'Birthday Service':
+                              return Icon(FontAwesomeIcons.cakeCandles,
+                                  color: Colors.pink.shade600);
+
+                          // Default event icon
+                            default:
+                              return Icon(FontAwesomeIcons.calendarDays,
+                                  color: Colors.green.shade800);
+                          }
+                        }
+// Function to determine if the appointment is ongoing or expired
+                        String getAppointmentStatus(DateTime appointmentDate) {
+                          DateTime currentDate = DateTime.now();
+                          // Normalize the current date to remove the time component, so we only compare the dates
+                          DateTime normalizedCurrentDate = DateTime(currentDate.year, currentDate.month, currentDate.day);
+
+                          // If the appointment is before the current date, it's expired
+                          if (appointmentDate.isBefore(normalizedCurrentDate)) {
+                            return "Expired";
+                          } else {
+                            return "Ongoing"; // If the appointment is today or in the future, it's ongoing
+                          }
+                        }
+
+
+
+// Function to return an appropriate badge widget
+                        Widget getStatusBadge(String status) {
+                          Color badgeColor = status == "Expired" ? Colors.red : Colors.green;
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: badgeColor,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              status,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
                               ),
-                            );
-                          }
-                          if (snapshot.hasError) {
-                            return Center(
-                                child: Text('Error: ${snapshot.error}')
-                            );
-                          }
-                          if (!snapshot.hasData ||
-                              snapshot.data!.docs.isEmpty) {
-                            return const Center(
-                              child: Text(
-                                'No approved appointment...',
-                                style: TextStyle(
-                                    fontSize: 18,
-                                    color: appGrey
+                            ),
+                          );
+                        }
+                        return Card(
+                          color: Colors.green.shade200,
+                          elevation: 2,
+                          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                            title: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 24,
+                                  backgroundColor: Colors.green.shade300,
+                                  child: getAppointmentIcon(data['appointmenttype'] ?? 'Unknown Type'),
                                 ),
-                              ),
-                            );
-                          }
-                          List<DocumentSnapshot> sortedAppointments =
-                              snapshot.data!.docs;
-                          if (sortByMonth) {
-                            sortedAppointments =
-                                sortAppointmentsByMonth(snapshot.data!);
-                          } else if (sortByDay) {
-                            sortedAppointments =
-                                sortAppointmentsByDay(snapshot.data!.docs);
-                          }
-                          sortedAppointments = sortedAppointments
-                              .where((document) =>
-                          !isAppointmentCompleted((document
-                              .data() as Map<String, dynamic>)["date"].toDate()))
-                              .toList();
-
-                          return ListView.builder(
-                            itemCount: sortedAppointments.length,
-                            itemBuilder: (context, index) {
-                              final document =
-                              sortedAppointments[index];
-                              final id = document.id;
-                              Map<String, dynamic> data =
-                              document.data() as Map<String, dynamic>;
-                              Timestamp timeStamp = data["date"];
-                              DateTime dateTime = timeStamp.toDate();
-                              List<String> months = [
-                                "January",
-                                "February",
-                                "March",
-                                "April",
-                                "May",
-                                "June",
-                                "July",
-                                "August",
-                                "September",
-                                "October",
-                                "November",
-                                "December"
-                              ];
-                              String formattedDate =
-                                  "${months[dateTime.month - 1]} ${dateTime.day}, ${dateTime.year}";
-
-                              // Function to return an appropriate icon based on the appointment type
-                              Icon getAppointmentIcon(String appointmentType) {
-                                switch (appointmentType) {
-                                // Religious Services
-                                  case 'Sunday Service':
-                                  case 'Christmas Service':
-                                    return Icon(FontAwesomeIcons.church, color: Colors.pink.shade800);
-                                  case 'Easter Service':
-                                    return const Icon(FontAwesomeIcons.egg, color: Colors.white);
-
-                                // Ceremonies
-                                  case 'Wedding Ceremony':
-                                    return Icon(FontAwesomeIcons.heart, color: Colors.red.shade800);
-                                  case 'Funeral Service':
-                                    return Icon(FontAwesomeIcons.skullCrossbones, color: Colors.grey.shade800);
-
-                                // Baptism and Communion
-                                  case 'Baptism':
-                                  case 'Communion Service':
-                                  case 'Infant Dedication':
-                                    return Icon(FontAwesomeIcons.dove, color: Colors.grey.shade300);
-
-                                // Visits and Missionary Work
-                                  case 'Pastoral Visit':
-                                  case 'Missionary Work':
-                                    return Icon(FontAwesomeIcons.businessTime, color: Colors.blue.shade800);
-
-                                // Prayer and Fellowship
-                                  case 'Prayer Meeting':
-                                    return Icon(FontAwesomeIcons.handsPraying, color: Colors.teal.shade800);
-                                  case 'Youth Fellowship':
-                                  case 'Bible Study':
-                                    return Icon(FontAwesomeIcons.bookOpen, color: Colors.orange.shade800);
-
-                                // Church and Community
-                                  case 'Church Anniversary':
-                                  case 'Community Outreach':
-                                    return Icon(FontAwesomeIcons.peopleCarryBox, color: Colors.purple.shade800);
-
-                                // Music and Choir
-                                  case 'Choir Practice':
-                                    return Icon(FontAwesomeIcons.music, color: Colors.green.shade800);
-
-                                // Meals and Socials
-                                  case 'Fellowship Meal':
-                                    return Icon(FontAwesomeIcons.utensils, color: Colors.brown.shade800);
-                                  case 'Anniversary Service':
-                                    return Icon(FontAwesomeIcons.cakeCandles, color: Colors.yellow.shade800);
-
-                                // Certificates
-                                  case 'Membership Certificate':
-                                  case 'Baptismal Certificate':
-                                    return Icon(FontAwesomeIcons.idCard, color: Colors.blueGrey.shade800);
-
-                                // Birthday Service
-                                  case 'Birthday Service':
-                                    return Icon(FontAwesomeIcons.cakeCandles, color: Colors.pink.shade600);
-
-                                // Default event icon
-                                  default:
-                                    return Icon(FontAwesomeIcons.calendarDays, color: Colors.green.shade800);
-                                }
-                              }
-                              return Card(
-                                color: Colors.green.shade200,
-                                elevation: 2,
-                                margin: const EdgeInsets.symmetric(
-                                    vertical: 8, horizontal: 4),
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                  title: Row(
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      CircleAvatar(
-                                        radius: 24,
-                                        backgroundColor: Colors.green.shade300,
-                                        child: getAppointmentIcon(
-                                          data['appointmenttype'] ?? 'Unknown Type',
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              data['appointmenttype'] ?? 'Unknown Type',
-                                              style: const TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black87,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  subtitle: Column(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                    children: [
-                                      const SizedBox(height: 4),
                                       Text(
-                                        'Date: $formattedDate',
+                                        data['appointmenttype'] ?? 'Unknown Type',
+                                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text.rich(
-                                        TextSpan(
-                                          children: [
-                                            const TextSpan(
-                                              text: 'Description:  ',
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black87,
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text: '${data['description'] ?? ''}',
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.black87,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        maxLines: 2,  // Limits to 2 lines
-                                        overflow: TextOverflow.ellipsis,  // Adds ellipsis if the text exceeds 2 lines
-                                      ),
-
                                     ],
                                   ),
                                 ),
+                                getStatusBadge(getAppointmentStatus(dateTime)),
+                              ],
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 4),
+                                Text('Date: $formattedDate'),
+                                const SizedBox(height: 4),
+                                Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      const TextSpan(
+                                        text: 'Description:  ',
+                                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                                      ),
+                                      TextSpan(
+                                        text: '${data['description'] ?? ''}',
+                                        style: const TextStyle(fontSize: 14, color: Colors.black87),
+                                      ),
+                                    ],
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                            onLongPress: () {
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return Dialog(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Stack(
+                                            children: [
+                                              Positioned(
+                                                right: 0,
+                                                top: 0,
+                                                child: IconButton(
+                                                  icon: const Icon(Icons.close, color: Colors.black),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop(); // Close the dialog
+                                                  },
+                                                ),
+                                              ),
+                                              Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      CircleAvatar(
+                                                        radius: 24,
+                                                        backgroundColor: Colors.green.shade300,
+                                                        child: getAppointmentIcon(data['appointmenttype'] ?? 'Unknown Type'),
+                                                      ),
+                                                      const SizedBox(width: 16),
+                                                      Expanded(
+                                                        child: Column(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            Text(
+                                                              data['appointmenttype'] ?? 'Unknown Type',
+                                                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+
+                                                  const SizedBox(height: 8),
+                                                  SingleChildScrollView(
+                                                    child: Text.rich(
+                                                      TextSpan(
+                                                        children: [
+                                                          const TextSpan(
+                                                            text: 'Description:  ',
+                                                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                                                          ),
+                                                          TextSpan(
+                                                            text: '${data['description'] ?? ''}',
+                                                            style: const TextStyle(fontSize: 14, color: Colors.black87),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    children: [
+                                                      getStatusBadge(getAppointmentStatus(dateTime)),
+
+                                                      Text('Date: $formattedDate', style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
                               );
                             },
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                          ),
+                        );
+                      },
+                    );
+                  },
                 ),
+              ),
+          const SizedBox(height: 10),
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text(
+              'Pending Requests',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+
+
               ),
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
@@ -418,13 +522,7 @@ class _EventPageState extends State<EventPage> {
                     if (snapshot.data == null ||
                         snapshot.data!.docs.isEmpty) {
                       return const Center(
-                        child: Text(
-                          'No pending appointment...',
-                          style: TextStyle(
-                              fontSize: 18,
-                              color: appGrey
-                          ),
-                        ),
+
                       );
                     }
                     List<DocumentSnapshot> sortedAppointments =
@@ -440,13 +538,7 @@ class _EventPageState extends State<EventPage> {
                       children: [
                         const Padding(
                           padding: EdgeInsets.all(8.0),
-                          child: Text(
-                            'Pending requests',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                            ),
-                          ),
+
                         ),
                         ...sortedAppointments.map((
                             DocumentSnapshot document,
