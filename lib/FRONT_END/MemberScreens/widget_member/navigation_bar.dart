@@ -64,7 +64,7 @@ class _HomePageState extends State<HomePage> {
         child: BottomNavigationBar(
           elevation: 6,
           backgroundColor: appGreen2,
-          selectedItemColor: appWhite,
+          selectedItemColor: appBlack,
           unselectedItemColor: appWhite,
           type: BottomNavigationBarType.fixed,
           iconSize: 20.0,
