@@ -88,40 +88,29 @@ class _HomePageState extends State<HomePage> {
 
           currentIndex: _currentTab,
           items: [
-            const BottomNavigationBarItem(
+            BottomNavigationBarItem(
               icon: Icon(
                 Icons.home,
                 size: 20,
+                color: _currentTab == 0 ? appBlack : appWhite, // Set icon color based on selection
               ),
               label: 'Home',
-              activeIcon: Text(
-                "",
-                style: TextStyle(
-                  fontSize: 8,
-                  color: appWhite,
-                ),
-              ),
             ),
-            const BottomNavigationBarItem(
+            BottomNavigationBarItem(
               icon: Icon(
                 Icons.event_available,
                 size: 20,
+                color: _currentTab == 1 ? appBlack : appWhite, // Set icon color based on selection
               ),
               label: 'Appointment',
-              activeIcon: Text(
-                "",
-                style: TextStyle(
-                  fontSize: 8,
-                  color: appWhite,
-                ),
-              ),
             ),
             BottomNavigationBarItem(
               icon: Stack(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.notifications,
                     size: 20,
+                    color: _currentTab == 2 ? appBlack : appWhite, // Set icon color based on selection
                   ),
                   if (_notificationCount > 0)
                     Positioned(
@@ -149,27 +138,14 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
               label: 'Notifications',
-              activeIcon: const Text(
-                "",
-                style: TextStyle(
-                  fontSize: 8,
-                  color: appWhite,
-                ),
-              ),
             ),
-            const BottomNavigationBarItem(
+            BottomNavigationBarItem(
               icon: Icon(
                 Icons.person,
                 size: 20,
+                color: _currentTab == 3 ? appBlack : appWhite, // Set icon color based on selection
               ),
               label: 'Profile',
-              activeIcon: Text(
-                "",
-                style: TextStyle(
-                  fontSize: 8,
-                  color: appWhite,
-                ),
-              ),
             ),
           ],
         ),
