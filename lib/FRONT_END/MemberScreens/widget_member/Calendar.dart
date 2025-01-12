@@ -10,6 +10,7 @@ import 'package:bethel_app_final/FRONT_END/constant/color.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class CustomCalendar extends StatefulWidget {
@@ -54,266 +55,249 @@ class _CustomCalendarState extends State<CustomCalendar> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(automaticallyImplyLeading: false),
-        body: Padding(
-          padding: const EdgeInsets.only(top: 20, left: 20, right: 20),
-          child: Column(
-            children: [
-              if (widget.type == "members")
-                const Text(
-                  "Request Appointment", // The more you know ;)
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                )
-              else
-                const Text(
-                  "Calendar",
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              const SizedBox(height: 15),
-              const Divider(
-                color: appGreen,
-              ),
-              FutureBuilder(
-                future: Future.wait([
-                  _pendingDate,
-                  _disabledDate,
-                  _approvedDate,
-                  _weatherCondition
-                ]),
-                builder: (context, snapshot) {
-                  var screen = MediaQuery.of(context).size;
-                  double screenX = screen.width;
-                  double screenY = screen.height;
 
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.green.shade100,
-                      ),
-                    );
-                  }
-                  if (snapshot.hasError) {
-                    return const Center(
-                      child: Text("SOMETHING HAPPENED X_X"),
-                    );
-                  } else {
-                    disabledDays = snapshot.data![1];
-                    pendingDays = snapshot.data![0];
-                    approvedDate = snapshot.data![2];
-                    weatherContionList = snapshot.data![3];
-                    return TableCalendar(
-                      rowHeight: screenY / 10,
-                      focusedDay: _focusedDay,
-                      firstDay: DateTime.utc(DateTime.now().year,
-                          DateTime.now().month, DateTime.now().day),
-                      lastDay: DateTime.utc(DateTime.now().year + 1, 2, 1),
-                      selectedDayPredicate: (day) {
-                        return isSameDay(_selectedDay, day);
-                      },
-                      onDaySelected: (selectedDay, focusedDay) {
-                        setState(() {
-                          _selectedDay = selectedDay;
-                          _focusedDay = focusedDay;
-                        });
-                      },
-                      calendarFormat: _calendarFormat,
-                      onFormatChanged: (format) {
-                        setState(() {
-                          _calendarFormat = format;
-                        });
-                      },
-                      calendarStyle: const CalendarStyle(
-                          // selectedDecoration: BoxDecoration(
-                          //     shape: BoxShape.circle, color: Colors.blueAccent),
-                          weekendTextStyle: TextStyle(color: Colors.red),
-                          outsideDaysVisible: false,
-                          weekNumberTextStyle: TextStyle(color: Colors.blue)),
-                      onDayLongPressed: (selectedDay, focusedDay) {
-                        if (widget.type == "admins") {
-                          var setDisableDays = <String, dynamic>{
-                            "date": Timestamp.fromDate(_selectedDay),
-                            "userID": tapAuth.getCurrentUserUID(),
-                            "name": tapAuth.auth.currentUser!.displayName
-                          };
-                          storage.setDisableDay(
-                              setDisableDays, tapAuth.auth.currentUser!.uid);
-                        }
-                      },
-                      headerStyle: const HeaderStyle(
-                          leftChevronIcon: Icon(Icons.chevron_left_rounded),
-                          rightChevronIcon: Icon(Icons.chevron_right_rounded),
-                          formatButtonVisible: false,
-                          titleCentered: true,
-                          titleTextStyle: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.w400)),
-                      pageAnimationEnabled: true,
-                      pageAnimationCurve: Curves.decelerate,
-                      onDisabledDayLongPressed: (day) {
-                        if (widget.type == "admins") {
-                          for (var disableDay in disabledDays) {
-                            if (day.month == disableDay.month &&
-                                day.day == disableDay.day &&
-                                day.year == disableDay.year) {
-                              storage.unsetDisableDay(
-                                  day.day, day.month, day.year);
-                              break; // Stops the loop for no more unecesarry checks
-                            }
-                          }
-                        }
-                      },
-                      onCalendarCreated: (pageController) {},
-                      enabledDayPredicate: (day) {
-                        for (int i = 0; i < disabledDays.length; i++) {
-                          if (disabledDays[i].month == day.month &&
-                              disabledDays[i].day == day.day &&
-                              disabledDays[i].year == day.year) {
-                            return false;
-                          }
-                        }
-                        return true;
-                      },
-                      calendarBuilders: CalendarBuilders(
-                        todayBuilder: (context, day, focusedDay) =>
-                            todayBuilder(day),
-                        selectedBuilder: (context, day, focusedDay) {
-                          // Gi try nakog method ni sila and its a fucking mistake fuck this calendar and gl sa pag basa ani
-                          for (int i = 0; i < 14; i++) {
-                            if (focusedDay.day ==
-                                    weatherContionList[i].dateTime.day &&
-                                focusedDay.month ==
-                                    weatherContionList[i].dateTime.month &&
-                                focusedDay.year ==
-                                    weatherContionList[i].dateTime.year) {
-                              return Column(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(50),
-                                    child: Container(
-                                        height: 35,
-                                        width: 35,
-                                        color: calendarSelected,
-                                        child: Center(
-                                            child: Text(
-                                          '${focusedDay.day}',
-                                          style: selectedText(),
-                                        ))),
-                                  ),
-                                  SizedBox(
-                                    height: 30,
-                                    child: IconUpButton(
-                                        focusedDay, weatherContionList[i]),
-                                  )
-                                ],
-                              );
-                            }
-                          }
-                        },
-                        markerBuilder: (context, day, events) =>
-                            marketBuilder(day),
-                        disabledBuilder: (context, day, focusedDay) =>
-                            disabledBuilder(day),
-                        defaultBuilder: (context, day, focusedDay) {
-                          for (int i = 0; i < pendingDays.length; i++) {
-                            if (pendingDays[i].month == day.month &&
-                                pendingDays[i].day == day.day &&
-                                pendingDays[i].year == day.year) {
-                              return Container(
-                                decoration: BoxDecoration(
-                                    color: Colors.yellow.shade200,
-                                    border: Border.all(
-                                        color: Colors.black26,
-                                        strokeAlign:
-                                            BorderSide.strokeAlignInside)),
-                                child: Center(
-                                  child: Text(
-                                    "${day.day}",
-                                    style: const TextStyle(color: Colors.black),
-                                  ),
-                                ),
-                              );
-                            }
-                          }
-                          for (int i = 0; i < approvedDate.length; i++) {
-                            if (approvedDate[i].month == day.month &&
-                                approvedDate[i].day == day.day &&
-                                approvedDate[i].year == day.year) {
-                              return Container(
-                                decoration: BoxDecoration(
-                                    color: Colors.lightGreen.shade200,
-                                    border: Border.all(
-                                        color: Colors.black26,
-                                        strokeAlign:
-                                            BorderSide.strokeAlignInside)),
-                                child: Center(
-                                  child: Text(
-                                    "${day.day}",
-                                    style: const TextStyle(color: Colors.black),
-                                  ),
-                                ),
-                              );
-                            }
-                          }
-                          //fuck me nganong dle nako ni mahimog method nalang. old calendar guro ang gamit lmao
-                          //for NON-focused days ni
-                          for (int i = 0; i < 14; i++) {
-                            if (day.day == weatherContionList[i].dateTime.day &&
-                                day.month ==
-                                    weatherContionList[i].dateTime.month &&
-                                day.year ==
-                                    weatherContionList[i].dateTime.year) {
-                              return Column(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    '${day.day}',
-                                    style: const TextStyle(color: Colors.black),
-                                  ),
-                                  IconUpButton(day, weatherContionList[i])
-                                ],
-                              );
-                            }
-                          }
-                        },
-                        dowBuilder: (context, day) {
-                          final red = DateFormat.E().format(day);
-                          final blue = DateFormat.E().format(day);
-                          if (day.weekday == DateTime.sunday ||
-                              day.weekday == DateTime.saturday) {
-                            return Center(
-                              child: Text(
-                                red,
-                                style: const TextStyle(color: Colors.red),
-                              ),
-                            );
-                          } else {
-                            return Center(
-                              child: Text(
-                                blue,
-                                style: const TextStyle(color: Colors.blue),
-                              ),
-                            );
-                          }
-                        },
-                      ),
-                    );
-                  }
-                },
+      appBar: AppBar(automaticallyImplyLeading: true),
+      body: Padding(
+        padding: const EdgeInsets.only(top: 20, left: 20, right: 20),
+        child: Column(
+          children: [
+            if (widget.type == "members")
+              const Text(
+                "Request Appointment",
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              )
+            else
+              const Text(
+                "Calendar",
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              if (widget.type == 'members')
-                AppointmentMakerButton()
-              else
-                EventMakerButton(context),
-            ],
-          ),
-        ));
+            const SizedBox(height: 15),
+            const Divider(
+              color: appGreen,
+            ),
+            FutureBuilder(
+              future: Future.wait([
+                _pendingDate,
+                _disabledDate,
+                _approvedDate,
+                _weatherCondition
+              ]),
+              builder: (context, snapshot) {
+                var screen = MediaQuery.of(context).size;
+                double screenX = screen.width;
+                double screenY = screen.height;
+
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: LoadingAnimationWidget.staggeredDotsWave(
+                      color: appGreen, // Customize the color
+                      size: 50.0, // Customize the size
+                    ),
+                  );
+                }
+
+                if (snapshot.hasError) {
+                  return const Center(
+                    child: Text("SOMETHING HAPPENED X_X"),
+                  );
+                } else {
+                  disabledDays = snapshot.data![1];
+                  pendingDays = snapshot.data![0];
+                  approvedDate = snapshot.data![2];
+                  weatherContionList = snapshot.data![3];
+                  return TableCalendar(
+                    rowHeight: screenY / 10,
+                    focusedDay: _focusedDay,
+                    firstDay: DateTime.utc(DateTime.now().year, DateTime.now().month, DateTime.now().day),
+                    lastDay: DateTime.utc(DateTime.now().year + 1, 2, 1),
+                    selectedDayPredicate: (day) {
+                      return isSameDay(_selectedDay, day);
+                    },
+                    onDaySelected: (selectedDay, focusedDay) {
+                      setState(() {
+                        _selectedDay = selectedDay;
+                        _focusedDay = focusedDay;
+                      });
+                    },
+                    calendarFormat: _calendarFormat,
+                    onFormatChanged: (format) {
+                      setState(() {
+                        _calendarFormat = format;
+                      });
+                    },
+                    calendarStyle: const CalendarStyle(
+                      weekendTextStyle: TextStyle(color: Colors.red),
+                      outsideDaysVisible: false,
+                      weekNumberTextStyle: TextStyle(color: Colors.blue),
+                    ),
+                    onDayLongPressed: (selectedDay, focusedDay) {
+                      if (widget.type == "admins") {
+                        var setDisableDays = <String, dynamic>{
+                          "date": Timestamp.fromDate(_selectedDay),
+                          "userID": tapAuth.getCurrentUserUID(),
+                          "name": tapAuth.auth.currentUser!.displayName
+                        };
+                        storage.setDisableDay(setDisableDays, tapAuth.auth.currentUser!.uid);
+                      }
+                    },
+                    headerStyle: const HeaderStyle(
+                      leftChevronIcon: Icon(Icons.chevron_left_rounded),
+                      rightChevronIcon: Icon(Icons.chevron_right_rounded),
+                      formatButtonVisible: false,
+                      titleCentered: true,
+                      titleTextStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
+                    ),
+                    pageAnimationEnabled: true,
+                    pageAnimationCurve: Curves.decelerate,
+                    onDisabledDayLongPressed: (day) {
+                      if (widget.type == "admins") {
+                        for (var disableDay in disabledDays) {
+                          if (day.month == disableDay.month &&
+                              day.day == disableDay.day &&
+                              day.year == disableDay.year) {
+                            storage.unsetDisableDay(day.day, day.month, day.year);
+                            break;
+                          }
+                        }
+                      }
+                    },
+                    onCalendarCreated: (pageController) {},
+                    enabledDayPredicate: (day) {
+                      for (int i = 0; i < disabledDays.length; i++) {
+                        if (disabledDays[i].month == day.month &&
+                            disabledDays[i].day == day.day &&
+                            disabledDays[i].year == day.year) {
+                          return false;
+                        }
+                      }
+                      return true;
+                    },
+                    calendarBuilders: CalendarBuilders(
+                      todayBuilder: (context, day, focusedDay) => todayBuilder(day),
+                      selectedBuilder: (context, day, focusedDay) {
+                        for (int i = 0; i < 14; i++) {
+                          if (focusedDay.day == weatherContionList[i].dateTime.day &&
+                              focusedDay.month == weatherContionList[i].dateTime.month &&
+                              focusedDay.year == weatherContionList[i].dateTime.year) {
+                            return Column(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(50),
+                                  child: Container(
+                                    height: 35,
+                                    width: 35,
+                                    color: calendarSelected,
+                                    child: Center(
+                                      child: Text(
+                                        '${focusedDay.day}',
+                                        style: selectedText(),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  height: 30,
+                                  child: IconUpButton(focusedDay, weatherContionList[i]),
+                                ),
+                              ],
+                            );
+                          }
+                        }
+                      },
+                      markerBuilder: (context, day, events) => marketBuilder(day),
+                      disabledBuilder: (context, day, focusedDay) => disabledBuilder(day),
+                      defaultBuilder: (context, day, focusedDay) {
+                        for (int i = 0; i < pendingDays.length; i++) {
+                          if (pendingDays[i].month == day.month &&
+                              pendingDays[i].day == day.day &&
+                              pendingDays[i].year == day.year) {
+                            return Container(
+                              decoration: BoxDecoration(
+                                color: Colors.yellow.shade200,
+                                border: Border.all(color: Colors.black26),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  "${day.day}",
+                                  style: const TextStyle(color: Colors.black),
+                                ),
+                              ),
+                            );
+                          }
+                        }
+                        for (int i = 0; i < approvedDate.length; i++) {
+                          if (approvedDate[i].month == day.month &&
+                              approvedDate[i].day == day.day &&
+                              approvedDate[i].year == day.year) {
+                            return Container(
+                              decoration: BoxDecoration(
+                                color: Colors.lightGreen.shade200,
+                                border: Border.all(color: Colors.black26),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  "${day.day}",
+                                  style: const TextStyle(color: Colors.black),
+                                ),
+                              ),
+                            );
+                          }
+                        }
+                        for (int i = 0; i < 14; i++) {
+                          if (day.day == weatherContionList[i].dateTime.day &&
+                              day.month == weatherContionList[i].dateTime.month &&
+                              day.year == weatherContionList[i].dateTime.year) {
+                            return Column(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Text(
+                                  '${day.day}',
+                                  style: const TextStyle(color: Colors.black),
+                                ),
+                                IconUpButton(day, weatherContionList[i])
+                              ],
+                            );
+                          }
+                        }
+                      },
+                      dowBuilder: (context, day) {
+                        final red = DateFormat.E().format(day);
+                        final blue = DateFormat.E().format(day);
+                        if (day.weekday == DateTime.sunday || day.weekday == DateTime.saturday) {
+                          return Center(
+                            child: Text(
+                              red,
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                          );
+                        } else {
+                          return Center(
+                            child: Text(
+                              blue,
+                              style: const TextStyle(color: Colors.blue),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  );
+                }
+              },
+            ),
+            if (widget.type == 'members') AppointmentMakerButton() else EventMakerButton(context),
+          ],
+        ),
+      ),
+    );
   }
+
 
   Widget IconUpButton(DateTime date, Weather weather) {
     return IconButton(

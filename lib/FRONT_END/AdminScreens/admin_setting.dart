@@ -6,6 +6,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+
+import '../authentications/option_to_loginform/option_what_account_to_use.dart';
 
 
 void signUserOut() {
@@ -31,7 +34,7 @@ class _AdminSettingsState extends State<AdminSettings> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: ListView(
-        padding: const EdgeInsets.only(top: 40, left: 20, right: 20),
+        padding: const EdgeInsets.only(top: 5, left: 20, right: 20),
 
         children: [
           Row(
@@ -60,7 +63,7 @@ class _AdminSettingsState extends State<AdminSettings> {
               const SizedBox(width: 50),
             ],
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 7),
           const Divider(
             color: appGreen,
           ),
@@ -199,7 +202,7 @@ class _AdminSettingsState extends State<AdminSettings> {
                     actions: [
                       TextButton(
                         onPressed: () {
-                          Navigator.of(context).pop();
+                          Navigator.of(context).pop(); // Close the dialog
                         },
                         child: const Text(
                           'No',
@@ -208,12 +211,30 @@ class _AdminSettingsState extends State<AdminSettings> {
                       ),
                       TextButton(
                         onPressed: () async {
-                          // Sign out of Firebase Authentication
-                          Navigator.of(context).pop();
+                          Navigator.of(context).pop(); // Close the dialog
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false, // Prevent closing the dialog
+                            builder: (BuildContext context) {
+                              return Center(
+                                child: LoadingAnimationWidget.staggeredDotsWave(
+                                  color: appGreen,
+                                  size: 50,
+                                ),
+                              );
+                            },
+                          );
+
                           try {
-                            await FirebaseAuth.instance.signOut();
-                            Get.back();
+                            await FirebaseAuth.instance.signOut(); // Perform Firebase sign-out
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => OptionToPlatformToLogin(),
+                              ),
+                            ); // Navigate to OptionToPlatformToLogin page
                           } catch (e) {
+                            Navigator.of(context).pop(); // Close the loading animation
                             print("Error signing out: $e");
                           }
                         },
@@ -227,6 +248,7 @@ class _AdminSettingsState extends State<AdminSettings> {
                 },
               );
             },
+
             child: const Padding(
               padding: EdgeInsets.all(15),
               child: Row(
@@ -251,6 +273,7 @@ class _AdminSettingsState extends State<AdminSettings> {
               ),
             ),
           ),
+
 
 
           Container(

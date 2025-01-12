@@ -5,6 +5,8 @@ import 'package:bethel_app_final/FRONT_END/constant/color.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class AdminHomePage extends StatefulWidget {
   const AdminHomePage({Key? key}) : super(key: key);
@@ -105,7 +107,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.only(top: 40, left: 20, right: 20),
+        padding: const EdgeInsets.only(top: 5, left: 20, right: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -137,13 +139,12 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 const SizedBox(width: 50),
               ],
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 7),
             const Divider(
               color: appGreen,
             ),
-            const SizedBox(height: 4),
             Padding(
-              padding: const EdgeInsets.all(10.0),
+              padding: const EdgeInsets.all(5.0),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   value: _selectedEventType,
@@ -175,7 +176,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 'Members approved appointments',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 18,
+                  fontSize: 20,
                 ),
               ),
             ),
@@ -184,7 +185,14 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 stream: _approvedAppointmentsStream,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return Scaffold(
+                      body: Center(
+                        child: LoadingAnimationWidget.staggeredDotsWave(
+                          color: appGreen, // Customize the color
+                          size: 50.0, // Customize the size
+                        ),
+                      ),
+                    );
                   }
                   if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
@@ -241,16 +249,24 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 'Church events',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 18,
+                  fontSize: 20,
                 ),
               ),
+
             ),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: _churchEventsStream,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return Scaffold(
+                      body: Center(
+                        child: LoadingAnimationWidget.staggeredDotsWave(
+                          color: appGreen, // Customize the color
+                          size: 50.0, // Customize the size
+                        ),
+                      ),
+                    );
                   }
                   if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
@@ -312,32 +328,141 @@ class _AdminHomePageState extends State<AdminHomePage> {
     String formattedDate = formatDateTime(timeStamp);
     bool completed = isEventCompleted(event);
     Color cardColor = completed ? Colors.grey.shade200 : Colors.green.shade200;
+    // Function to return an appropriate icon based on the appointment type
+    Icon getAppointmentIcon(String appointmentType) {
+      switch (appointmentType) {
+      // Religious Services
+        case 'Sunday Service':
+        case 'Christmas Service':
+          return Icon(FontAwesomeIcons.church, color: Colors.pink.shade800);
+        case 'Easter Service':
+          return const Icon(FontAwesomeIcons.egg, color: Colors.white);
 
+      // Ceremonies
+        case 'Wedding Ceremony':
+          return Icon(FontAwesomeIcons.heart, color: Colors.red.shade800);
+        case 'Funeral Service':
+          return Icon(FontAwesomeIcons.skullCrossbones, color: Colors.grey.shade800);
+
+      // Baptism and Communion
+        case 'Baptism':
+        case 'Communion Service':
+        case 'Infant Dedication':
+          return Icon(FontAwesomeIcons.dove, color: Colors.grey.shade300);
+
+      // Visits and Missionary Work
+        case 'Pastoral Visit':
+        case 'Missionary Work':
+          return Icon(FontAwesomeIcons.businessTime, color: Colors.blue.shade800);
+
+      // Prayer and Fellowship
+        case 'Prayer Meeting':
+          return Icon(FontAwesomeIcons.handsPraying, color: Colors.teal.shade800);
+        case 'Youth Fellowship':
+        case 'Bible Study':
+          return Icon(FontAwesomeIcons.bookOpen, color: Colors.orange.shade800);
+
+      // Church and Community
+        case 'Church Anniversary':
+        case 'Community Outreach':
+          return Icon(FontAwesomeIcons.peopleCarryBox, color: Colors.purple.shade800);
+
+      // Music and Choir
+        case 'Choir Practice':
+          return Icon(FontAwesomeIcons.music, color: Colors.green.shade800);
+
+      // Meals and Socials
+        case 'Fellowship Meal':
+          return Icon(FontAwesomeIcons.utensils, color: Colors.brown.shade800);
+        case 'Anniversary Service':
+          return Icon(FontAwesomeIcons.cakeCandles, color: Colors.yellow.shade800);
+
+      // Certificates
+        case 'Membership Certificate':
+        case 'Baptismal Certificate':
+          return Icon(FontAwesomeIcons.idCard, color: Colors.blueGrey.shade800);
+
+      // Birthday Service
+        case 'Birthday Service':
+          return Icon(FontAwesomeIcons.cakeCandles, color: Colors.pink.shade600);
+
+      // Default event icon
+        default:
+          return Icon(FontAwesomeIcons.calendarDays, color: Colors.green.shade800);
+      }
+    }
     return Card(
       color: cardColor,
       elevation: 2,
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      margin: const EdgeInsets.symmetric(
+          vertical: 4, horizontal: 4),
       child: ListTile(
-        title: Text(
-          'Appointment: ${data['appointmenttype'] ?? ''}',
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        title: Row(
           children: [
-            Text(
-              'Description: ${data['description'] ?? ''}',
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: Colors.green.shade50,
+              child: getAppointmentIcon(
+                data['appointmenttype'] ?? 'Unknown Type',
+              ),
             ),
-            Text(
-              'Date: $formattedDate',
-            ),
-            Text(
-              'Name: ${data['name'] ?? ''}',
-            ),
-            Text(
-              'Email: ${data['email'] ?? ''}',
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    data['appointmenttype'] ?? 'Unknown Type',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
+        subtitle: Column(
+          crossAxisAlignment:
+          CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Text(
+              'Email: ${data['email'] ?? ''}',
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Date: $formattedDate',
+            ),
+            const SizedBox(height: 4),
+            Text.rich(
+              TextSpan(
+                children: [
+                  const TextSpan(
+                    text: 'Description:  ',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  TextSpan(
+                    text: '${data['description'] ?? ''}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.black87,
+
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
       ),
     );
   }
@@ -351,41 +476,149 @@ class _AdminHomePageState extends State<AdminHomePage> {
     bool completed = isEventCompleted(document); // Check if event is completed
     Color cardColor = completed ? Colors.grey.shade200 : Colors.green.shade200; // Set color based on completion
 
+    // Function to return an appropriate icon based on the appointment type
+    Icon getAppointmentIcon(String appointmentType) {
+      switch (appointmentType) {
+      // Religious Services
+        case 'Sunday Service':
+        case 'Christmas Service':
+          return Icon(FontAwesomeIcons.church, color: Colors.pink.shade800);
+        case 'Easter Service':
+          return const Icon(FontAwesomeIcons.egg, color: Colors.white);
+
+      // Ceremonies
+        case 'Wedding Ceremony':
+          return Icon(FontAwesomeIcons.heart, color: Colors.red.shade800);
+        case 'Funeral Service':
+          return Icon(FontAwesomeIcons.skullCrossbones, color: Colors.grey.shade800);
+
+      // Baptism and Communion
+        case 'Baptism':
+        case 'Communion Service':
+        case 'Infant Dedication':
+          return Icon(FontAwesomeIcons.dove, color: Colors.grey.shade300);
+
+      // Visits and Missionary Work
+        case 'Pastoral Visit':
+        case 'Missionary Work':
+          return Icon(FontAwesomeIcons.businessTime, color: Colors.blue.shade800);
+
+      // Prayer and Fellowship
+        case 'Prayer Meeting':
+          return Icon(FontAwesomeIcons.handsPraying, color: Colors.teal.shade800);
+        case 'Youth Fellowship':
+        case 'Bible Study':
+          return Icon(FontAwesomeIcons.bookOpen, color: Colors.orange.shade800);
+
+      // Church and Community
+        case 'Church Anniversary':
+        case 'Community Outreach':
+          return Icon(FontAwesomeIcons.peopleCarryBox, color: Colors.purple.shade800);
+
+      // Music and Choir
+        case 'Choir Practice':
+          return Icon(FontAwesomeIcons.music, color: Colors.green.shade800);
+
+      // Meals and Socials
+        case 'Fellowship Meal':
+          return Icon(FontAwesomeIcons.utensils, color: Colors.brown.shade800);
+        case 'Anniversary Service':
+          return Icon(FontAwesomeIcons.cakeCandles, color: Colors.yellow.shade800);
+
+      // Certificates
+        case 'Membership Certificate':
+        case 'Baptismal Certificate':
+          return Icon(FontAwesomeIcons.idCard, color: Colors.blueGrey.shade800);
+
+      // Birthday Service
+        case 'Birthday Service':
+          return Icon(FontAwesomeIcons.cakeCandles, color: Colors.pink.shade600);
+
+      // Default event icon
+        default:
+          return Icon(FontAwesomeIcons.calendarDays, color: Colors.green.shade800);
+      }
+    }
+
     return Card(
       color: cardColor,
       elevation: 2,
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      margin: const EdgeInsets.symmetric(
+          vertical: 4, horizontal: 4),
       child: ListTile(
-        title: Text(
-          'Event: ${data['appointmenttype'] ?? ''}',
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        title: Row(
           children: [
-            Text(
-              'Description: ${data['description'] ?? ''}',
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: Colors.green.shade300,
+              child: getAppointmentIcon(
+                data['appointmenttype'] ?? 'Unknown Type',
+              ),
             ),
-            Text(
-              'Date: $formattedDate',
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    data['appointmenttype'] ?? 'Unknown Type',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
+        subtitle: Column(
+          crossAxisAlignment:
+          CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Text(
+              'Email: ${data['email'] ?? ''}',
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Date: $formattedDate',
+            ),
+            const SizedBox(height: 4),
+            Text.rich(
+              TextSpan(
+                children: [
+                  const TextSpan(
+                    text: 'Description:  ',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  TextSpan(
+                    text: '${data['description'] ?? ''}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+              maxLines: 2,  // Limits to 2 lines
+              overflow: TextOverflow.ellipsis,  // Adds ellipsis if the text exceeds 2 lines
+            ),
+          ],
+        ),
+
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            IconButton(
-              icon: const Icon(Icons.info_outline),
-              onPressed: () {
-                setState(() {
-                  showOptionsMap[id] =
-                  !(showOptionsMap[id] ?? false);
-                });
-              },
-            ),
-            if (showOptionsMap[id] ?? false)
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
+                  color: Colors.green.shade200,
                   borderRadius: BorderRadius.circular(8.0),
                 ),
                 child: Row(
@@ -393,9 +626,8 @@ class _AdminHomePageState extends State<AdminHomePage> {
                   children: [
                     const SizedBox(width: 8.0),
                     IconButton(
-                      icon: const Icon(Icons.delete,
-                          color: Colors.red,
-                          size: 24.0),
+                      icon: const Icon(FontAwesomeIcons.trashCan,
+                          color: Colors.red, size: 24.0),
                       onPressed: () {
                         showDialog(
                           context: context,
@@ -405,7 +637,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                               title: const Text(
                                   "Confirm Delete"),
                               content: const Text(
-                                  "Are you sure you want to delete this request?"),
+                                  "Are you sure you want to delete this event?"),
                               actions: <Widget>[
                                 TextButton(
                                   onPressed: () {
