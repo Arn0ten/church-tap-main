@@ -5,6 +5,9 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+
+import '../../constant/color.dart';
 
 class MapPage extends StatefulWidget {
 
@@ -32,7 +35,12 @@ class _MapPageState extends State<MapPage> {
         body: Center(
           child: FutureBuilder(future: _future, builder: (context, snapshot) {
             if(snapshot.connectionState == ConnectionState.waiting) {
-              return const CircularProgressIndicator();
+              return Center(
+                child: LoadingAnimationWidget.staggeredDotsWave(
+                  color: appGreen, // Customize the color
+                  size: 50.0, // Customize the size
+                ),
+              );
             }
             else if(snapshot.hasError){
             const SnackBar(content: Text("Loading Map Failed!"));
