@@ -522,6 +522,10 @@ class _EventPageState extends State<EventPage> {
                     if (snapshot.data == null ||
                         snapshot.data!.docs.isEmpty) {
                       return const Center(
+                        child: Text(
+                          'No pending requests...',
+                          style: TextStyle(fontSize: 18, color: appGrey),
+                        ),
 
                       );
                     }

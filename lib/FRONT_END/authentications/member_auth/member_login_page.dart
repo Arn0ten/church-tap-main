@@ -142,15 +142,19 @@ class _MemberLoginPageState extends State<MemberLoginPage> {
                     height: 250,
                   ),
                   const SizedBox(height: 30),
-                  const Padding(
-                    padding: EdgeInsets.only(right: 170),
-                    child: Text(
-                      'Member Login',
-                      style: TextStyle(
-                        color: Colors.black87,
-                        fontSize: 26,
+                 const Row(
+                    children: [
+                       Padding(
+                        padding: EdgeInsets.only(right:170),
+                        child: Text(
+                          '     Login',
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontSize: 26,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                   const SizedBox(height: 20),
                   MyTextField(

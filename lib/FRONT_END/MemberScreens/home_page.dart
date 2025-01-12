@@ -1,8 +1,7 @@
-  import 'dart:ui';
+  import 'dart:math';
+import 'dart:ui';
   import 'package:bethel_app_final/BACK_END/Services/Functions/Users.dart';
   import 'package:bethel_app_final/FRONT_END/MemberScreens/screen_pages/home_screen_pages/mapstoragescreen.dart';
-  import 'package:bethel_app_final/FRONT_END/MemberScreens/screen_pages/home_screen_pages/search_button_details.dart';
-  import 'package:bethel_app_final/FRONT_END/MemberScreens/weather_page.dart';
   import 'package:bethel_app_final/FRONT_END/constant/color.dart';
   import 'package:cloud_firestore/cloud_firestore.dart';
   import 'package:flutter/cupertino.dart';
@@ -11,7 +10,6 @@
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
-import '../constant/color.dart';
   
   class MemberHomePage extends StatefulWidget {
     const MemberHomePage({Key? key}) : super(key: key);
@@ -20,14 +18,15 @@ import '../constant/color.dart';
     State<MemberHomePage> createState() => _MemberHomePageState();
   }
   
-  class _MemberHomePageState extends State<MemberHomePage> {
+  class _MemberHomePageState extends State<MemberHomePage> with SingleTickerProviderStateMixin {
     final UserStorage userStorage = UserStorage();
     String _selectedEventType = 'Upcoming';
     bool _isSearching = false;
     bool sortByMonth = false;
     bool sortByDay = false;
     int clickCount = 0;
-  
+    late AnimationController _controller;
+    late Animation<double> _swingAnimation;
     String formatDateTime(Timestamp? timeStamp) {
       if (timeStamp == null) {
         return " No date available";
@@ -63,7 +62,24 @@ import '../constant/color.dart';
       });
       return events;
     }
-  
+    @override
+    void initState() {
+      super.initState();
+
+      _controller = AnimationController(
+        vsync: this, // Ensure this State is a TickerProvider
+        duration: const Duration(seconds: 3),
+      )..repeat(reverse: true);
+
+      _swingAnimation = Tween<double>(begin: -0.05, end: 0.05)
+          .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    }
+    @override
+    void dispose() {
+      _controller.dispose();
+      super.dispose();
+    }
+
     @override
     Widget build(BuildContext context) {
       return Scaffold(
@@ -101,15 +117,6 @@ import '../constant/color.dart';
                       icon: const Icon(Icons.sort),
                     ),
                     //Icon sa weather page
-                    IconButton(
-                      icon: Icon(Icons.cloud, color: Colors.black),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const WeatherPage()),
-                        );
-                      },
-                    ),
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
@@ -120,12 +127,26 @@ import '../constant/color.dart';
                         );
                       },
                       child: Hero(
-                        tag: '',
-                        child: SearchButton(
-                          isSearching: _isSearching,
+                        tag: 'mapHero',
+                        child: AnimatedBuilder(
+                          animation: _controller,
+                          builder: (context, child) {
+                            return Transform.translate(
+                              offset: Offset(0, sin(_controller.value * 2 * pi) * 5), // Floating effect
+                              child: Transform.rotate(
+                                angle: _swingAnimation.value, // Swinging effect
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: Image.asset(
+                            'assets/images/church-map.png',
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.contain,
+                          ),
                         ),
-                      ),
-  
+                    ),
                     ),
                   ],
                 ),
