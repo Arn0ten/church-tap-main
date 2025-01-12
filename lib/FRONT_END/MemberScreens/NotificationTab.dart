@@ -122,50 +122,6 @@ class _NotificationTabState extends State<NotificationTab> {
     return currentUser?.uid ?? '';
   }
 
-  void _updateNotificationCount({bool decrement = false}) {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    final uid = currentUser?.uid ?? '';
-    if (uid.isNotEmpty) {
-      if (decrement) {
-        setState(() {
-          _notificationStream = UserStorage().getNotification(uid);
-          _notificationCount--;
-          if (_notificationCount < 0) {
-            _notificationCount = 0;
-          }
-        });
-      }
-    }
-  }
-
-  void _autoClickBoldCards() async {
-    final uid = getCurrentUserId();
-    if (uid.isNotEmpty) {
-      try {
-        final snapshot = await FirebaseFirestore.instance
-            .collection("users")
-            .doc("members")
-            .collection(uid)
-            .doc("Event")
-            .collection("Notification")
-            .where("isRead", isEqualTo: false) // Get only unread notifications
-            .get();
-
-        for (final document in snapshot.docs) {
-          await document.reference.update({"isRead": true}); // Mark as read
-          clickedNotificationIds.add(document.id);
-        }
-
-        setState(() {
-          _notificationCount = 0; // Reset notification count
-        });
-      } catch (e) {
-        print('Error marking all notifications as read: $e');
-      }
-    } else {
-      print('User is not logged in.');
-    }
-  }
 
 
   Future<void> markNotificationAsRead(String uid, String documentId) async {
@@ -268,11 +224,13 @@ class _NotificationTabState extends State<NotificationTab> {
                           margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
-                            color: notif['status'] == 'Denied'
-                                ? Colors.red[100]
+                            color: isRead
+                                ? notif['status'] == 'Denied'
+                                ? Colors.grey[300]
                                 : notif['status'] == 'Approved'
-                                ? Colors.green[100]
-                                : Colors.blue[100], // Solid color based on the status
+                                ? Colors.grey[300]
+                                : Colors.grey[300]  // Color when the notification is read
+                                : Colors.green[200],  // Color for unread notifications
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.grey.withOpacity(0.2),
@@ -301,21 +259,44 @@ class _NotificationTabState extends State<NotificationTab> {
                                         ),
                                       ),
                                     ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                                      decoration: BoxDecoration(
-                                        color: badgeColor,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        notif['status'],
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
+
+                                    // Badge for unread notifications
+                                    // Display "New" badge if notification is unread
+                                    if (!isRead)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                                        decoration: BoxDecoration(
+                                          color: Colors.green,  // Green color for the "New" badge
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: const Text(
+                                          "New",  // Text for the unread notification badge
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
                                         ),
                                       ),
-                                    ),
+
                                   ],
+                                ),
+                                Container(
+                                  padding: const EdgeInsets
+                                      .symmetric(
+                                      horizontal: 8,
+                                      vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: badgeColor,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    notif['status'],
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12
+                                    ),
+                                  ),
                                 ),
                                 const SizedBox(height: 10),
 
@@ -381,6 +362,7 @@ class _NotificationTabState extends State<NotificationTab> {
                                         style: const TextStyle(
                                           fontSize: 14,
                                           color: Colors.black87,
+
                                         ),
                                       ),
                                     ],

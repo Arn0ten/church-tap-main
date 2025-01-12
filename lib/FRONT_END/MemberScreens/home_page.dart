@@ -27,7 +27,7 @@ import '../constant/color.dart';
     bool sortByMonth = false;
     bool sortByDay = false;
     int clickCount = 0;
-  
+
     String formatDateTime(Timestamp? timeStamp) {
       if (timeStamp == null) {
         return " No date available";
@@ -63,7 +63,7 @@ import '../constant/color.dart';
       });
       return events;
     }
-  
+
     @override
     Widget build(BuildContext context) {
       return Scaffold(
@@ -101,15 +101,6 @@ import '../constant/color.dart';
                       icon: const Icon(Icons.sort),
                     ),
                     //Icon sa weather page
-                    IconButton(
-                      icon: Icon(Icons.cloud, color: Colors.black),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const WeatherPage()),
-                        );
-                      },
-                    ),
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
@@ -120,13 +111,16 @@ import '../constant/color.dart';
                         );
                       },
                       child: Hero(
-                        tag: '',
-                        child: SearchButton(
-                          isSearching: _isSearching,
+                        tag: 'mapHero',
+                        child: Image.asset(
+                          'assets/images/church-map.png', // Path to your map icon/image
+                          width: 60, // Adjust the width
+                          height: 60, // Adjust the height
+                          fit: BoxFit.contain, // Adjust the fit as needed
                         ),
                       ),
-  
                     ),
+
                   ],
                 ),
               ),

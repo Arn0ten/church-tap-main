@@ -43,6 +43,13 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  //i taga zero sa counter hahahah
+  void _resetNotificationCount() {
+    setState(() {
+      _notificationCount = 0;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -63,11 +70,22 @@ class _HomePageState extends State<HomePage> {
           iconSize: 20.0,
           selectedFontSize: 12.0,
           unselectedFontSize: 12.0,
+
           onTap: (int value) {
             setState(() {
               _currentTab = value;
+              if (value == 0) {
+                _resetNotificationCount();
+              }else if(value == 1) {
+                _resetNotificationCount();
+              }else if(value == 2) {
+                _resetNotificationCount();
+              }else if(value == 3) {
+                _resetNotificationCount();
+              }
             });
           },
+
           currentIndex: _currentTab,
           items: [
             const BottomNavigationBarItem(
