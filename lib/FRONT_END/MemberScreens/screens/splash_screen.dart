@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:bethel_app_final/FRONT_END/authentications/option_to_loginform/option_what_account_to_use.dart';
 import 'package:bethel_app_final/FRONT_END/constant/color.dart';
 import 'package:flutter/material.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -89,8 +90,9 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const CircularProgressIndicator(
+                  LoadingAnimationWidget.staggeredDotsWave(
                     color: appGreen,
+                    size: 50, // Adjust the size of the animation
                   ),
                 ],
               ),

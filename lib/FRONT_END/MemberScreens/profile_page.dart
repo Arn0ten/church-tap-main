@@ -6,6 +6,9 @@ import 'package:bethel_app_final/FRONT_END/constant/color.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+
+import '../authentications/option_to_loginform/option_what_account_to_use.dart';
 
 
 void signUserOut() {
@@ -33,7 +36,7 @@ class _ProfileState extends State<Profile> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: ListView(
-        padding: const EdgeInsets.only(top: 40, left: 20, right: 20),
+        padding: const EdgeInsets.only(top: 25, left: 20, right: 20),
 
         children: [
           Row(
@@ -260,7 +263,7 @@ class _ProfileState extends State<Profile> {
                     actions: [
                       TextButton(
                         onPressed: () {
-                          Navigator.of(context).pop();
+                          Navigator.of(context).pop(); // Close the dialog
                         },
                         child: const Text(
                           'No',
@@ -269,11 +272,30 @@ class _ProfileState extends State<Profile> {
                       ),
                       TextButton(
                         onPressed: () async {
-                          Navigator.of(context).pop();
+                          Navigator.of(context).pop(); // Close the dialog
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false, // Prevent closing the dialog
+                            builder: (BuildContext context) {
+                              return Center(
+                                child: LoadingAnimationWidget.staggeredDotsWave(
+                                  color: appGreen,
+                                  size: 50,
+                                ),
+                              );
+                            },
+                          );
+
                           try {
-                            await FirebaseAuth.instance.signOut();
-                            Get.back();
+                            await FirebaseAuth.instance.signOut(); // Perform Firebase sign-out
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => OptionToPlatformToLogin(),
+                              ),
+                            ); // Navigate to OptionToPlatformToLogin page
                           } catch (e) {
+                            Navigator.of(context).pop(); // Close the loading animation
                             print("Error signing out: $e");
                           }
                         },
@@ -311,6 +333,7 @@ class _ProfileState extends State<Profile> {
               ),
             ),
           ),
+
 
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 30),

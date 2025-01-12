@@ -8,6 +8,10 @@
   import 'package:flutter/cupertino.dart';
   import 'package:flutter/material.dart';
   import 'package:flutter/widgets.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+
+import '../constant/color.dart';
   
   class MemberHomePage extends StatefulWidget {
     const MemberHomePage({Key? key}) : super(key: key);
@@ -190,8 +194,13 @@
                         stream: userStorage.fetchCreateMemberEvent(),
                         builder: (context, snapshot) {
                           if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
+                            return Scaffold(
+                              body: Center(
+                                child: LoadingAnimationWidget.staggeredDotsWave(
+                                  color: appGreen, // Customize the color
+                                  size: 50.0, // Customize the size
+                                ),
+                              ),
                             );
                           } else if (snapshot.hasError) {
                             return Text('Error: ${snapshot.error}');
@@ -271,31 +280,252 @@
                                   ];
                                   String formattedDate =
                                       "${months[dateTime.month - 1]} ${dateTime.day}, ${dateTime.year}";
-  
+                                  // Function to return an appropriate icon based on the appointment type
+                                  Icon getAppointmentIcon(String appointmentType) {
+                                    switch (appointmentType) {
+                                    // Religious Services
+                                      case 'Sunday Service':
+                                      case 'Christmas Service':
+                                        return Icon(FontAwesomeIcons.church, color: Colors.pink.shade800);
+                                      case 'Easter Service':
+                                        return const Icon(FontAwesomeIcons.egg, color: Colors.white);
+
+                                    // Ceremonies
+                                      case 'Wedding Ceremony':
+                                        return Icon(FontAwesomeIcons.heart, color: Colors.red.shade800);
+                                      case 'Funeral Service':
+                                        return Icon(FontAwesomeIcons.skullCrossbones, color: Colors.grey.shade800);
+
+                                    // Baptism and Communion
+                                      case 'Baptism':
+                                      case 'Communion Service':
+                                      case 'Infant Dedication':
+                                        return Icon(FontAwesomeIcons.dove, color: Colors.grey.shade300);
+
+                                    // Visits and Missionary Work
+                                      case 'Pastoral Visit':
+                                      case 'Missionary Work':
+                                        return Icon(FontAwesomeIcons.businessTime, color: Colors.blue.shade800);
+
+                                    // Prayer and Fellowship
+                                      case 'Prayer Meeting':
+                                        return Icon(FontAwesomeIcons.handsPraying, color: Colors.teal.shade800);
+                                      case 'Youth Fellowship':
+                                      case 'Bible Study':
+                                        return Icon(FontAwesomeIcons.bookOpen, color: Colors.orange.shade800);
+
+                                    // Church and Community
+                                      case 'Church Anniversary':
+                                      case 'Community Outreach':
+                                        return Icon(FontAwesomeIcons.peopleCarryBox, color: Colors.purple.shade800);
+
+                                    // Music and Choir
+                                      case 'Choir Practice':
+                                        return Icon(FontAwesomeIcons.music, color: Colors.green.shade800);
+
+                                    // Meals and Socials
+                                      case 'Fellowship Meal':
+                                        return Icon(FontAwesomeIcons.utensils, color: Colors.brown.shade800);
+                                      case 'Anniversary Service':
+                                        return Icon(FontAwesomeIcons.cakeCandles, color: Colors.yellow.shade800);
+
+                                    // Certificates
+                                      case 'Membership Certificate':
+                                      case 'Baptismal Certificate':
+                                        return Icon(FontAwesomeIcons.idCard, color: Colors.blueGrey.shade800);
+
+                                    // Birthday Service
+                                      case 'Birthday Service':
+                                        return Icon(FontAwesomeIcons.cakeCandles, color: Colors.pink.shade600);
+
+                                    // Default event icon
+                                      default:
+                                        return Icon(FontAwesomeIcons.calendarDays, color: Colors.green.shade800);
+                                    }
+                                  }
                                   bool completed = isEventCompleted(event); // Check if event is completed
                                   Color cardColor = completed ? Colors.grey.shade200 : Colors.green.shade200; // Set color based on completion
-  
-                                  return Card(
-                                    color: cardColor,
-                                    elevation: 2,
-                                    margin: const EdgeInsets.symmetric(
-                                      vertical: 8,
-                                      horizontal: 4,
-                                    ),
-                                    child: ListTile(
-                                      title: Text(
-                                        'Event: ${event['appointmenttype'] ?? ''}',
-                                        style: const TextStyle(),
-                                      ),
-                                      subtitle: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text('Description: ${event['description'] ?? ''}'),
-                                          Text('Date: $formattedDate'),
-                                        ],
+
+                                  return GestureDetector(
+                                    onLongPress: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return Dialog(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(16.0),
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Stack(
+                                                    children: [
+                                                      // Close button in the top-right corner
+                                                      Positioned(
+                                                        right: 0,
+                                                        top: 0,
+                                                        child: IconButton(
+                                                          icon: const Icon(Icons.close, color: Colors.black),
+                                                          onPressed: () {
+                                                            Navigator.of(context).pop(); // Close the dialog
+                                                          },
+                                                        ),
+                                                      ),
+                                                      // Content Section
+                                                      Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Row(
+                                                            children: [
+                                                              CircleAvatar(
+                                                                radius: 24,
+                                                                backgroundColor: Colors.green.shade300,
+                                                                child: getAppointmentIcon(
+                                                                  event['appointmenttype'] ?? 'Unknown Type',
+                                                                ),
+                                                              ),
+                                                              const SizedBox(width: 16),
+                                                              Expanded(
+                                                                child: Column(
+                                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                                  children: [
+                                                                    Text(
+                                                                      event['appointmenttype'] ?? 'Unknown Type',
+                                                                      style: const TextStyle(
+                                                                        fontSize: 18,
+                                                                        fontWeight: FontWeight.bold,
+                                                                        color: Colors.black87,
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          const SizedBox(height: 4),
+                                                          const Text(
+                                                            'By: Admin/Church',
+                                                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                                                          ),
+                                                          const SizedBox(height: 8),
+                                                          SingleChildScrollView(
+                                                            child: Text.rich(
+                                                              TextSpan(
+                                                                children: [
+                                                                  const TextSpan(
+                                                                    text: 'Description:  ',
+                                                                    style: TextStyle(
+                                                                      fontSize: 16,
+                                                                      fontWeight: FontWeight.bold,
+                                                                      color: Colors.black87,
+                                                                    ),
+                                                                  ),
+                                                                  TextSpan(
+                                                                    text: '${event['description'] ?? ''}',
+                                                                    style: const TextStyle(
+                                                                      fontSize: 14,
+                                                                      color: Colors.black87,
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          const SizedBox(height: 4),
+                                                          Row(
+                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                                                            children: [
+                                                              const SizedBox(height: 4),
+                                                              Text(
+                                                                'Date: $formattedDate',
+                                                                style: const TextStyle(fontSize: 14, color: Colors.grey),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                    child: Card(
+                                      color: Colors.green.shade200,
+                                      elevation: 2,
+                                      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                      child: ListTile(
+                                        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                        title: Row(
+                                          children: [
+                                            CircleAvatar(
+                                              radius: 24,
+                                              backgroundColor: Colors.green.shade300,
+                                              child: getAppointmentIcon(
+                                                event['appointmenttype'] ?? 'Unknown Type',
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    event['appointmenttype'] ?? 'Unknown Type',
+                                                    style: const TextStyle(
+                                                      fontSize: 18,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.black87,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        subtitle: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Date: $formattedDate',
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text.rich(
+                                              TextSpan(
+                                                children: [
+                                                  const TextSpan(
+                                                    text: 'Description:  ',
+                                                    style: TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.black87,
+                                                    ),
+                                                  ),
+                                                  TextSpan(
+                                                    text: '${event['description'] ?? ''}',
+                                                    style: const TextStyle(
+                                                      fontSize: 14,
+                                                      color: Colors.black87,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              maxLines: 2,  // Limits to 2 lines
+                                              overflow: TextOverflow.ellipsis,  // Adds ellipsis if the text exceeds 2 lines
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   );
+
                                 },
                               );
                             }

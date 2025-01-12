@@ -136,7 +136,7 @@ class _AdminRegisterPageState extends State<AdminRegisterPage> {
       appBar: AppBar(
         automaticallyImplyLeading: true,
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: appWhite,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(

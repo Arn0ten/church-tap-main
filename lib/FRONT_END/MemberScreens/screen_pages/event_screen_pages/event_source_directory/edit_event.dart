@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:bethel_app_final/BACK_END/Services/Functions/Authentication.dart';
 import 'package:bethel_app_final/BACK_END/Services/Functions/Users.dart';
 import 'package:bethel_app_final/FRONT_END/constant/color.dart';
@@ -7,35 +6,48 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class EditEvent extends StatefulWidget {
   final DateTime firstDate;
   final DateTime lastDate;
-  final String documentId; // Change this line
+  final String documentId;
   final bool isAdmin;
-  const EditEvent({Key? key,
-    required this.firstDate,
-    required this.lastDate,
-    required this.documentId,
-    required this.isAdmin}) : super(key: key); // Change this line
+  const EditEvent(
+      {Key? key,
+        required this.firstDate,
+        required this.lastDate,
+        required this.documentId,
+        required this.isAdmin})
+      : super(key: key);
 
   @override
   State<EditEvent> createState() => _EditEventState();
 }
 
 class _EditEventState extends State<EditEvent> {
-  late Future _getDocument;
+  late Future<Map<String, dynamic>> _getDocument;
   int count = 0;
-  late DateTime _selectedDate;
+  DateTime _selectedDate = DateTime.now();
   final _descController = TextEditingController();
   String _selectedEventType = '';
   late List<String> _eventTypes;
   UserStorage storage = UserStorage();
   TapAuth auth = TapAuth();
+  bool isCustomAppointment = false;
+
+  final TextEditingController _customAppointmentController = TextEditingController();
+
+  @override
+  void dispose() {
+    _descController.dispose();
+    _customAppointmentController.dispose();
+    super.dispose();
+  }
+
   @override
   void initState() {
-
     super.initState();
     _fetchEventTypes().then((types) {
       setState(() {
@@ -45,196 +57,520 @@ class _EditEventState extends State<EditEvent> {
     _getDocument = fetchdocument(widget.documentId);
     _selectedDate = widget.firstDate;
   }
+  bool _isDataInitialized = false;
 
+  @override
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-          title: const Text("Edit")
-      ),
+      appBar: AppBar(title: const Text("Edit Event")),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: FutureBuilder(
           future: _getDocument,
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(
+                child: LoadingAnimationWidget.staggeredDotsWave(
+                  color: appGreen, // Customize the color
+                  size: 50.0, // Customize the size
+                ),
+              );
             } else if (snapshot.hasError) {
               return Center(child: Text('Error: ${snapshot.error}'));
-            } else {
-                fetchCount(snapshot.data['appointmenttype']);
-              _descController.text = snapshot.data['description'];
+            } else if (snapshot.hasData) {
+              final document = snapshot.data as Map<String, dynamic>;
+
+              if (!_isDataInitialized) {
+                // Initialize data only once
+                _descController.text = document['description'] ?? '';
+                final appointmentType = document['appointmenttype'] ?? '';
+                if (_eventTypes.contains(appointmentType)) {
+                  _selectedEventType = appointmentType;
+                } else {
+                  isCustomAppointment = true;
+                  _customAppointmentController.text = appointmentType;
+                }
+                _selectedDate = (document['date'] as Timestamp?)?.toDate() ?? widget.firstDate;
+                _isDataInitialized = true; // Mark data as initialized
+              }
+
               return _buildForm();
+            } else {
+              return const Center(child: Text('No data found.'));
             }
           },
         ),
       ),
-
     );
   }
-  Future<Map<String,dynamic>> fetchdocument(String documentID) async{
+
+
+
+  Future<Map<String,dynamic>> fetchdocument(String documentID) async {
     var map = <String,dynamic>{};
-    if(widget.isAdmin == true){
+    if (widget.isAdmin == true) {
       await storage.db.collectionGroup("Church Event").get()
           .then((value) {
-            for (var element in value.docs) {
-              if(element.id == widget.documentId){
-                map = element.data();
-              }
-            }
-          },);
+        for (var element in value.docs) {
+          if (element.id == widget.documentId) {
+            map = element.data();
+          }
+        }
+      });
+    } else {
+      await storage.db.collection("users")
+          .doc("members")
+          .collection(auth.auth.currentUser!.uid)
+          .doc("Event")
+          .collection("Pending Appointment")
+          .get().then((value) {
+        for (var element in value.docs) {
+          if (element.id == widget.documentId) {
+            map = element.data();
+          }
+        }
+      });
     }
-  else{
-    await storage.db.collection("users")
-        .doc("members")
-        .collection(auth.auth.currentUser!.uid)
-        .doc("Event")
-        .collection("Pending Appointment")
-        .get().then((value) {
-         for(var element in value.docs) {
-           if(element.id == widget.documentId){
-             map = element.data();
-           }
-         }
-        },);
-    }
-  return map;
+    return map;
   }
 
-  Future<String> fetchdisc() async{
+
+  Future<String> fetchdisc() async {
     String localdesc = '';
-    await storage.db.collection('users')
+    await storage.db
+        .collection('users')
         .doc('members')
         .collection(auth.auth.currentUser!.uid)
         .doc('Event')
         .collection('Pending Appointment')
         .doc(widget.documentId)
-        .get().then((value) {
-      localdesc = value.data()?['description'];
-    },);
+        .get()
+        .then(
+          (value) {
+        localdesc = value.data()?['description'];
+      },
+    );
     return localdesc;
   }
 
-  Future<void>fetchCount(String type)async{
-      switch(type){
-        case "Meeting": {
-            count = 0;
-        }
-        case "Conference": {
-          count = 1;
-        }
-        case "Seminar": {
-          count = 2;
-        }
-        case "Workshop": {
-          count = 3;
-        }
-        case "Webinar": {
-          count = 4;
-        }
-        case "Infant Dedication": {
-          count = 5;
-        }
-        case "Birthday Service": {
-          count = 6;
-        }
-        case "Birthday Manyanita": {
-          count = 7;
-        }
-        case "Membership Certificate": {
-          count = 8;
-        }
-        case "Baptismal Certificate": {
-          count = 9;
-        }
-        default:{
-          count = 0;
-        }
-      }
+  // Function to get the icon for each appointment type
+  Icon getAppointmentIcon(String appointmentType) {
+    switch (appointmentType) {
+    // Religious Services
+      case 'Sunday Service':
+      case 'Christmas Service':
+        return Icon(FontAwesomeIcons.church, color: Colors.pink.shade800);
+      case 'Easter Service':
+        return const Icon(FontAwesomeIcons.egg, color: Colors.deepPurple);
+
+    // Ceremonies
+      case 'Wedding Ceremony':
+        return Icon(FontAwesomeIcons.heart, color: Colors.red.shade800);
+      case 'Funeral Service':
+        return Icon(FontAwesomeIcons.skullCrossbones,
+            color: Colors.grey.shade800);
+
+    // Baptism and Communion
+      case 'Baptism':
+      case 'Communion Service':
+      case 'Infant Dedication':
+        return Icon(FontAwesomeIcons.dove, color: Colors.deepPurple);
+
+    // Visits and Missionary Work
+      case 'Pastoral Visit':
+      case 'Missionary Work':
+        return Icon(FontAwesomeIcons.businessTime, color: Colors.blue.shade800);
+
+    // Prayer and Fellowship
+      case 'Prayer Meeting':
+        return Icon(FontAwesomeIcons.handsPraying, color: Colors.teal.shade800);
+      case 'Youth Fellowship':
+      case 'Bible Study':
+        return Icon(FontAwesomeIcons.bookOpen, color: Colors.orange.shade800);
+
+    // Church and Community
+      case 'Church Anniversary':
+      case 'Community Outreach':
+        return Icon(FontAwesomeIcons.peopleCarryBox,
+            color: Colors.purple.shade800);
+
+    // Music and Choir
+      case 'Choir Practice':
+        return Icon(FontAwesomeIcons.music, color: Colors.green.shade800);
+
+    // Meals and Socials
+      case 'Fellowship Meal':
+        return Icon(FontAwesomeIcons.utensils, color: Colors.brown.shade800);
+      case 'Anniversary Service':
+        return Icon(FontAwesomeIcons.cakeCandles,
+            color: Colors.yellow.shade800);
+
+    // Certificates
+      case 'Membership Certificate':
+      case 'Baptismal Certificate':
+        return Icon(FontAwesomeIcons.idCard, color: Colors.blueGrey.shade800);
+
+    // Birthday Service
+      case 'Birthday Service':
+        return Icon(FontAwesomeIcons.cakeCandles, color: Colors.pink.shade600);
+
+    // Default event icon
+      default:
+        return Icon(FontAwesomeIcons.calendarDays,
+            color: Colors.green.shade800);
+    }
   }
-  
+
+  Future<Map<String, dynamic>> fetchCount(String type) async {
+    int count = 0;
+    Icon eventIcon = const Icon(FontAwesomeIcons.calendarDays); // Default icon
+
+    switch (type) {
+      case "Sunday Service":
+      case "Christmas Service":
+        count = 0;
+        eventIcon = getAppointmentIcon('Sunday Service');
+        break;
+      case "Easter Service":
+        count = 1;
+        eventIcon = getAppointmentIcon('Easter Service');
+        break;
+      case "Wedding Ceremony":
+        count = 2;
+        eventIcon = getAppointmentIcon('Wedding Ceremony');
+        break;
+      case "Funeral Service":
+        count = 3;
+        eventIcon = getAppointmentIcon('Funeral Service');
+        break;
+      case "Baptism":
+      case "Communion Service":
+      case "Infant Dedication":
+        count = 4;
+        eventIcon = getAppointmentIcon('Baptism');
+        break;
+      case "Pastoral Visit":
+      case "Missionary Work":
+        count = 5;
+        eventIcon = getAppointmentIcon('Pastoral Visit');
+        break;
+      case "Prayer Meeting":
+        count = 6;
+        eventIcon = getAppointmentIcon('Prayer Meeting');
+        break;
+      case "Youth Fellowship":
+      case "Bible Study":
+        count = 7;
+        eventIcon = getAppointmentIcon('Youth Fellowship');
+        break;
+      case "Church Anniversary":
+      case "Community Outreach":
+        count = 8;
+        eventIcon = getAppointmentIcon('Church Anniversary');
+        break;
+      case "Choir Practice":
+        count = 9;
+        eventIcon = getAppointmentIcon('Choir Practice');
+        break;
+      case "Fellowship Meal":
+        count = 10;
+        eventIcon = getAppointmentIcon('Fellowship Meal');
+        break;
+      case "Anniversary Service":
+        count = 11;
+        eventIcon = getAppointmentIcon('Anniversary Service');
+        break;
+      case "Membership Certificate":
+        count = 12;
+        eventIcon = getAppointmentIcon('Membership Certificate');
+        break;
+      case "Baptismal Certificate":
+        count = 13;
+        eventIcon = getAppointmentIcon('Baptismal Certificate');
+        break;
+      default:
+        count = 0;
+        eventIcon = getAppointmentIcon('Meeting');
+        break;
+    }
+
+    return {
+      'count': count,
+      'icon': eventIcon,
+    };
+  }
+
   Widget _buildForm() {
     return ListView(
       padding: const EdgeInsets.all(16.0),
       children: [
-        TextFormField( //USED THIS KAY PARA WALAY BROKEN DATES UG YEARS SA DATABASE
-          enabled: false,
-          readOnly: true,
-          decoration: const InputDecoration(
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.only()
+        // Date Picker Section
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Pick a Date",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              enabled: false,
-              disabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: Colors.black)
-              )
+              const SizedBox(height: 8.0),
+              TextButton(
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.all(12.0),
+                  backgroundColor: Colors.blueAccent.withOpacity(0.1),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                ),
+                onPressed: () async {
+                  final DateTime? pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: _selectedDate,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime(2100),
+                    builder: (BuildContext context, Widget? child) {
+                      return Theme(
+                        data: ThemeData.light().copyWith(
+                          colorScheme: const ColorScheme.light(
+                            primary: Colors.blue,
+                            onPrimary: Colors.white,
+                            onSurface: Colors.black,
+                          ),
+                        ),
+                        child: child ?? const SizedBox.shrink(),
+                      );
+                    },
+                  );
+                  if (pickedDate != null && pickedDate != _selectedDate) {
+                    setState(() {
+                      _selectedDate = pickedDate;
+                    });
+                  }
+                },
+                child: Row(
+                  children: [
+                    const Icon(Icons.calendar_today, color: Colors.blue),
+                    const SizedBox(width: 8.0),
+                    Text(
+                      "${_selectedDate.toLocal()}".split(' ')[0], // Display selected date
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                  ],
+                ),
+              ),
+
+              const Divider(height: 32.0),
+              // Section: Appointment Type
+              const Text(
+                "Appointment Type",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8.0),
+            ],
           ),
-          style: TextStyle(
-              color: Colors.black),
-          initialValue: "${_selectedDate.month}"+"/${_selectedDate.day}/"+"${_selectedDate.year}",
         ),
-        DropdownButtonFormField<String>(
-          value: _eventTypes[count] ,
-          onChanged: (String? newValue) {
-            setState(() {
-              _selectedEventType = newValue ?? 'Meeting'; //WHY PUT A FUCKING NO VALUE HERE?
-            });
-          },
-          items: _eventTypes.map((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(value),
-            );
-          }).toList(),
+
+        const Divider(),
+
+        // Event Type Dropdown
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: DropdownButtonFormField<String>(
+            value: _selectedEventType.isNotEmpty ? _selectedEventType : null,
+            decoration: const InputDecoration(
+              labelText: "Event Type",
+              border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+            ),
+            items: _eventTypes.map((String value) {
+              Icon eventIcon = getAppointmentIcon(value);
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Row(
+                  children: [
+                    eventIcon,
+                    const SizedBox(width: 10),
+                    Text(value),
+                  ],
+                ),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedEventType = newValue ?? '';
+                isCustomAppointment = false; // Explicitly set this to false
+                print('Dropdown updated to: $_selectedEventType');
+              });
+            },
+
+          ),
         ),
-        TextField(
-          controller: _descController,
-          maxLines: 5,
-          decoration: const InputDecoration(labelText: 'Description'),
+
+        const Divider(),
+
+        // Custom Appointment Option
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Custom Appointment',
+                style: TextStyle(fontSize: 16),
+              ),
+              Checkbox(
+                value: isCustomAppointment,
+                onChanged: (bool? value) {
+                  setState(() {
+                    isCustomAppointment = value ?? false;
+                    if (!isCustomAppointment) {
+                      _customAppointmentController.clear();
+                    }
+                  });
+                },
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 15),
-        ElevatedButton(
-          onPressed: () {
-            _updatePendingRequest();
-          },
-          style: ElevatedButton.styleFrom(
-              backgroundColor: appGreen2),
-          child: const Text("Save",
-          style: TextStyle(
-            color: appBlack
-          ),),
+        if (isCustomAppointment)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: TextFormField(
+              controller: _customAppointmentController,
+              decoration: const InputDecoration(
+                labelText: "Enter Custom Appointment",
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+              ),
+            ),
+          ),
+
+        const Divider(),
+
+
+        // Section: Description
+        const Text(
+          "Description",
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 10),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red),
-          child: const Text("Cancel",
-          style: TextStyle(
-            color: appBlack
-          ),),
+        const SizedBox(height: 8.0),
+
+        // Description Field
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: TextFormField(
+            controller: _descController,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.all(16.0),
+            ),
+          ),
         ),
+
+        const Divider(),
+
+        // Save Button
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              backgroundColor: appGreen,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+            ),
+            // Save Button
+            onPressed: () async {
+              final newAppointmentType = isCustomAppointment
+                  ? _customAppointmentController.text.trim()
+                  : _selectedEventType;
+
+              print('Saving Appointment Type: $newAppointmentType'); // Debug print
+              if (newAppointmentType.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Please provide an appointment type.")),
+                );
+                return;
+              }
+
+              // Show confirmation dialog before saving
+              bool shouldSave = await showDialog<bool>(
+                context: context,
+                barrierDismissible: false, // Dialog cannot be dismissed by tapping outside
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text("Confirm Save"),
+                    content: const Text("Are you sure you want to save this appointment type?"),
+                    actions: <Widget>[
+                      TextButton(
+                        child: const Text("Cancel"),
+                        onPressed: () {
+                          Navigator.of(context).pop(false); // Return false if canceled
+                        },
+                      ),
+                      TextButton(
+                        child: const Text("Confirm"),
+                        onPressed: () {
+                          Navigator.of(context).pop(true); // Return true if confirmed
+                        },
+                      ),
+                    ],
+                  );
+                },
+              ) ?? false;
+
+              if (shouldSave) {
+                await _saveChanges(newAppointmentType, _descController.text.trim());
+                Navigator.pop(context);
+                // Show Snackbar indicating the appointment is added
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Updated successfully!'),
+                    backgroundColor: Colors.blue,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
+            },
+            label: const Text(
+              "Save",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+
+
       ],
     );
   }
 
+
   Future<List<String>> _fetchEventTypes() async {
     try {
       List<String> eventTypes = [
-        'Meeting',
-        'Conference',
-        'Seminar',
-        'Workshop',
-        'Webinar',
+        'Funeral Service',
+        'Wedding Ceremony',
+        'Sunday Service',
+        'Christmas Service',
+        'Easter Service',
+        'Baptism',
+        'Communion Service',
+        'Church Anniversary',
         'Infant Dedication',
-        'Birthday Service',
-        'Birthday Manyanita',
-        'Membership Certificate',
-        'Baptismal Certificate'
-
+        'Pastoral Visit',
+        'Prayer Meeting',
+        'Community Outreach',
+        'Youth Fellowship',
+        'Bible Study',
+        'Fellowship Meal',
       ];
       return eventTypes;
     } catch (e) {
@@ -245,61 +581,47 @@ class _EditEventState extends State<EditEvent> {
     }
   }
 
-  Future<void> _updatePendingRequest() async {
+  Future<void> _saveChanges(String appointmentType, String description) async {
     try {
-      final description = _descController.text;
-      final selectedDate = _selectedDate;
-      final selectedEventType = _selectedEventType;
+      final data = {
+        'description': _descController.text,
+        'appointmenttype': isCustomAppointment
+            ? _customAppointmentController.text
+            : _selectedEventType,
+        'date': _selectedDate,
+      };
 
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser == null) {
-        print('No user is currently signed in');
-        return;
+      if (widget.isAdmin) {
+        await storage.db
+            .collectionGroup("Church Event")
+            .where(FieldPath.documentId, isEqualTo: widget.documentId)
+            .get()
+            .then((snapshot) async {
+          if (snapshot.docs.isNotEmpty) {
+            await snapshot.docs.first.reference.update(data);
+          }
+        });
+      } else {
+        await storage.db
+            .collection("users")
+            .doc("members")
+            .collection(auth.auth.currentUser!.uid)
+            .doc("Event")
+            .collection("Pending Appointment")
+            .doc(widget.documentId)
+            .update(data);
       }
 
 
-       final eventDocRef = FirebaseFirestore.instance
-            .collection("users")
-            .doc("members")
-            .collection(currentUser.uid)
-            .doc("Event")
-            .collection("Pending Appointment")
-            .doc(widget.documentId);
 
-      
-      await eventDocRef.update({
-        "description": description,
-        "date": Timestamp.fromDate(selectedDate),
-        "appointmenttype": selectedEventType,
-      });
-
-      _showSuccessDialogEventEdit();
     } catch (e) {
-      print('Error updating pending request: $e');
+      log("Error updating appointment: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to update appointment."),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),),
+      );
     }
   }
-
-
-  void _showSuccessDialogEventEdit() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Success'),
-          content: const Text('Pending request updated successfully.'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.pop(context, true);
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  }
- // void
+// void
 }
-
