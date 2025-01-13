@@ -1,14 +1,16 @@
 import 'dart:convert';
 import 'dart:developer';
+
 import 'package:bethel_app_final/BACK_END/Services/Functions/Users.dart';
 import 'package:bethel_app_final/FRONT_END/authentications/auth_classes/error_indicator.dart';
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:fuzzy/fuzzy.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+
 import '../constant/color.dart';
-import 'package:fuzzy/fuzzy.dart';
 
 class AdminApproval extends StatefulWidget {
   const AdminApproval({Key? key}) : super(key: key);
@@ -105,7 +107,6 @@ class _AdminApprovalState extends State<AdminApproval> {
     }
   }
 
-
   Future<void> _performDenyAppointment(
       String appointmentId, String userID) async {
     try {
@@ -159,6 +160,7 @@ class _AdminApprovalState extends State<AdminApproval> {
     });
     return appointments;
   }
+
 ///////////////////////////////////////////////////////////////////////
 // Group appointments by date
   Map<String, List<DocumentSnapshot>> groupAppointmentsByDate(
@@ -323,8 +325,6 @@ class _AdminApprovalState extends State<AdminApproval> {
                       ),
                     );
                   }
-
-
                   // Sort appointments by month
                   List<DocumentSnapshot> sortedAppointments =
                       sortAppointmentsByMonth(snapshot.data!);
@@ -366,25 +366,24 @@ class _AdminApprovalState extends State<AdminApproval> {
                     });
                   }
 
-                  Future<void> handleAppointmentAction(String appointmentId,
-                      String userID, bool isApprove) async {
+                  Future<void> handleAppointmentAction(String appointmentId, String userID, bool isApprove) async {
+                    // Determine the action text based on approval status
                     String action = isApprove ? "approve" : "deny";
+
+                    // Show confirmation dialog for approval/denial
                     bool? confirmation = await showDialog<bool>(
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
                           title: Text("Confirm Action"),
-                          content: Text(
-                              "Are you sure you want to $action this appointment?"),
+                          content: Text("Are you sure you want to $action this appointment?"),
                           actions: [
                             TextButton(
-                              onPressed: () => Navigator.of(context).pop(false),
-                              // Cancel
+                              onPressed: () => Navigator.of(context).pop(false),  // Cancel action
                               child: Text("Cancel"),
                             ),
                             TextButton(
-                              onPressed: () => Navigator.of(context).pop(true),
-                              // Confirm
+                              onPressed: () => Navigator.of(context).pop(true),  // Confirm action
                               child: Text("Confirm"),
                             ),
                           ],
@@ -394,41 +393,72 @@ class _AdminApprovalState extends State<AdminApproval> {
 
                     if (confirmation == true) {
                       try {
-                        String actionMessage = isApprove
-                            ? "Approving appointment..."
-                            : "Denying appointment...";
-                        await DialogHelper.showLoadingDialog(
-                            context, actionMessage);
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (BuildContext context) {
+                            return Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  LoadingAnimationWidget.staggeredDotsWave(
+                                    color: appGreen,
+                                    size: 50.0,
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    isApprove ? "Approving appointment..." : "Denying appointment...",
+                                    style: const TextStyle(fontSize: 16, color: appWhite),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
 
+                        // Handle the case where the appointment is being approved
                         if (isApprove) {
-                          await _performApprovedAppointment(
-                              appointmentId, userID);
-                          DialogHelper.showSnackBar(
-                              context, "Appointment successfully approved.");
+                          // Call the method to deny appointments on the same date except the approved one
+                          // await userStorage.removeSameDateIfAccepted(userID, appointmentId);
+                          // Proceed with approving the appointment
+                          await _performApprovedAppointment(appointmentId, userID);
+
+                          // Show success message to the user
+                          DialogHelper.showSnackBar(context, "Appointment successfully approved.");
                         } else {
+                          // Handle denial of the appointment
                           await _performDenyAppointment(appointmentId, userID);
-                          DialogHelper.showSnackBar(
-                              context, "Appointment successfully denied.");
+                          DialogHelper.showSnackBar(context, "Appointment successfully denied.");
                         }
 
-                        // Refresh the priority list after an action
+                        // Refresh the appointment list after performing the action
                         refreshAppointments();
+
+                        // Dismiss the loading dialog
+                        Navigator.of(context).pop();
+
                       } catch (e) {
+                        // Handle any errors that occur during the approval/denial process
                         String errorMessage = isApprove
                             ? "Error approving appointment."
                             : "Error denying appointment.";
                         log("$errorMessage: $e");
                         DialogHelper.showSnackBar(context, errorMessage);
+
+                        // Dismiss the loading dialog if there's an error
+                        Navigator.of(context).pop();
                       }
                     }
                   }
+
+
+
 
                   // Group appointments by date
                   Map<String, List<DocumentSnapshot>> groupedAppointments =
                       groupAppointmentsByDate(sortedAppointments);
 
                   Map<String, double> highestPriorityByDate = {};
-
 
                   // First, calculate the highest priority for each date
                   groupedAppointments.forEach((dateKey, appointments) {
@@ -681,30 +711,39 @@ class _AdminApprovalState extends State<AdminApproval> {
                                                           CrossAxisAlignment
                                                               .start,
                                                       children: [
-                                                         Row(
+                                                        Row(
                                                           children: [
                                                             CircleAvatar(
                                                               radius: 24,
                                                               backgroundColor:
-                                                              Colors.amber.shade300,
-                                                              child: getAppointmentIcon(
+                                                                  Colors.amber
+                                                                      .shade300,
+                                                              child:
+                                                                  getAppointmentIcon(
                                                                 data['appointmenttype'] ??
                                                                     'Unknown Type',
                                                               ),
                                                             ),
-                                                            const SizedBox(width: 16),
+                                                            const SizedBox(
+                                                                width: 16),
                                                             Expanded(
                                                               child: Column(
                                                                 crossAxisAlignment:
-                                                                CrossAxisAlignment.start,
+                                                                    CrossAxisAlignment
+                                                                        .start,
                                                                 children: [
                                                                   Text(
                                                                     data['appointmenttype'] ??
                                                                         'Unknown Type',
-                                                                    style: const TextStyle(
-                                                                      fontSize: 18,
-                                                                      fontWeight: FontWeight.bold,
-                                                                      color: Colors.black87,
+                                                                    style:
+                                                                        const TextStyle(
+                                                                      fontSize:
+                                                                          18,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                      color: Colors
+                                                                          .black87,
                                                                     ),
                                                                   ),
                                                                 ],
@@ -728,68 +767,77 @@ class _AdminApprovalState extends State<AdminApproval> {
                                                           TextSpan(
                                                             children: [
                                                               const TextSpan(
-                                                                text: 'Description:  ',
-                                                                style: TextStyle(
+                                                                text:
+                                                                    'Description:  ',
+                                                                style:
+                                                                    TextStyle(
                                                                   fontSize: 17,
-                                                                  fontWeight: FontWeight.bold,
-                                                                  color: Colors.black87,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  color: Colors
+                                                                      .black87,
                                                                 ),
                                                               ),
                                                               TextSpan(
-                                                                text: '${data['description'] ?? ''}',
-                                                                style: const TextStyle(
+                                                                text:
+                                                                    '${data['description'] ?? ''}',
+                                                                style:
+                                                                    const TextStyle(
                                                                   fontSize: 14,
-                                                                  color: Colors.black87,
+                                                                  color: Colors
+                                                                      .black87,
                                                                 ),
                                                               ),
                                                             ],
                                                           ),
                                                         ),
-
                                                         const SizedBox(
                                                             height: 16),
                                                         if (isHighestPriority)
                                                           Row(
-                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
                                                             children: [
                                                               Container(
-                                                                padding:
-                                                                    const EdgeInsets
-                                                                        .symmetric(
-                                                                        horizontal:
-                                                                            8,
-                                                                        vertical:
-                                                                            4),
+                                                                padding: const EdgeInsets
+                                                                    .symmetric(
+                                                                    horizontal:
+                                                                        8,
+                                                                    vertical:
+                                                                        4),
                                                                 decoration:
                                                                     BoxDecoration(
-                                                                  color: Colors.red,
+                                                                  color: Colors
+                                                                      .red,
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
                                                                               20),
                                                                 ),
-
-                                                                child: const Text(
+                                                                child:
+                                                                    const Text(
                                                                   'High Priority',
                                                                   style: TextStyle(
                                                                       color: Colors
                                                                           .white,
-                                                                      fontSize: 12),
+                                                                      fontSize:
+                                                                          12),
                                                                 ),
-
                                                               ),
-
                                                             ],
                                                           ),
                                                         Row(
-                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceBetween,
                                                           children: [
                                                             const SizedBox(
                                                                 height: 16),
                                                             Text(
                                                               'Date: $dateKey',
-                                                              style:
-                                                              const TextStyle(
+                                                              style: const TextStyle(
                                                                   fontSize: 14,
                                                                   color: Colors
                                                                       .grey),
@@ -798,7 +846,6 @@ class _AdminApprovalState extends State<AdminApproval> {
                                                         ),
                                                       ],
                                                     ),
-
                                                   ],
                                                 ),
                                               ],
@@ -831,7 +878,6 @@ class _AdminApprovalState extends State<AdminApproval> {
                                                   'Unknown Type',
                                             ),
                                           ),
-
                                           const SizedBox(width: 16),
                                           Expanded(
                                             child: Column(
@@ -893,12 +939,14 @@ class _AdminApprovalState extends State<AdminApproval> {
                                                     text: 'Description:  ',
                                                     style: TextStyle(
                                                       fontSize: 16,
-                                                      fontWeight: FontWeight.bold,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                       color: Colors.black87,
                                                     ),
                                                   ),
                                                   TextSpan(
-                                                    text: '${data['description'] ?? ''}',
+                                                    text:
+                                                        '${data['description'] ?? ''}',
                                                     style: const TextStyle(
                                                       fontSize: 14,
                                                       color: Colors.black87,
@@ -906,10 +954,10 @@ class _AdminApprovalState extends State<AdminApproval> {
                                                   ),
                                                 ],
                                               ),
-                                              maxLines: 2,  // Limits to 2 lines
-                                              overflow: TextOverflow.ellipsis,  // Adds ellipsis if the text exceeds 2 lines
+                                              maxLines: 2, // Limits to 2 lines
+                                              overflow: TextOverflow
+                                                  .ellipsis, // Adds ellipsis if the text exceeds 2 lines
                                             ),
-
                                           ],
                                         ),
                                       ),
