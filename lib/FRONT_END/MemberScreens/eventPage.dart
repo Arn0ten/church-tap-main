@@ -663,9 +663,11 @@ class _EventPageState extends State<EventPage> {
                                             color: Colors.black87,
                                           ),
                                         ),
+
                                       ],
                                     ),
                                   ),
+
                                 ],
                               ),
                               subtitle: Column(
@@ -760,10 +762,10 @@ class _EventPageState extends State<EventPage> {
 
                                                           // Show the snackbar after deletion
                                                           ScaffoldMessenger.of(context).showSnackBar(
-                                                            SnackBar(
-                                                              content: const Text("Appointment deleted successfully"),
+                                                            const SnackBar(
+                                                              content: Text("Appointment deleted successfully"),
                                                               backgroundColor: Colors.red,
-                                                                duration: const Duration(seconds: 2),
+                                                                duration: Duration(seconds: 2),
                                                             ),
                                                           );
 

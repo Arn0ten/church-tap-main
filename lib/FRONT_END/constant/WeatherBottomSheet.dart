@@ -3,13 +3,18 @@ import 'package:flutter/material.dart';
 import '../../BACK_END/models/Weather.dart';
 import '../MemberScreens/widget_member/widget/calendar/BoxContainer.dart';
 
-class WeatherSheetTab extends StatelessWidget {
+class WeatherSheetTab extends StatefulWidget {
   final Weather weather;
   const WeatherSheetTab({super.key, required this.weather});
 
   @override
+  State<WeatherSheetTab> createState() => _WeatherSheetTabState();
+}
+
+class _WeatherSheetTabState extends State<WeatherSheetTab> {
+  @override
   Widget build(BuildContext context) {
-    double weatherAvg = weather.temp_max + weather.temp_min / 2;
+    double weatherAvg = widget.weather.temp_max + widget.weather.temp_min / 2;
     return Container(
       decoration: const BoxDecoration(
           borderRadius: BorderRadius.only(
@@ -25,14 +30,14 @@ class WeatherSheetTab extends StatelessWidget {
                 style: defaultFont(30, FontWeight.bold),
               ),
               Text(
-                'Chance of rain: ${weather.rain_probability}%',
+                'Chance of rain: ${widget.weather.rain_probability}%',
                 style: defaultFont(15, FontWeight.normal),
               ),
               const SizedBox(
                 height: 40,
               ),
               Image.asset(
-                determineWeatherPicture(weather.weatherCode),
+                determineWeatherPicture(widget.weather.weatherCode),
                 height: 150,
               ),
               const SizedBox(
@@ -41,7 +46,7 @@ class WeatherSheetTab extends StatelessWidget {
               FittedBox(
                 fit: BoxFit.fitWidth,
                 child: Text(
-                  determineWeather(weather.weatherCode),
+                  determineWeather(widget.weather.weatherCode),
                   style: defaultFont(35, FontWeight.bold),
                 ),
               ),
@@ -49,7 +54,7 @@ class WeatherSheetTab extends StatelessWidget {
                 height: 40,
               ),
               Boxcontainer(
-                weather: weather,
+                weather: widget.weather,
               )
             ],
           ),
