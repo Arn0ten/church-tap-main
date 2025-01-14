@@ -212,7 +212,7 @@ class UserStorage {
 
       log("Appointment $appointmentId approved for user $userID.");
 
-      await setNotification(userID, appointmentId);
+      await setNotification(userID, appointmentId,false);
 
       // Move appointment to 'Approved Appointment' collection
       await db
@@ -249,18 +249,7 @@ class UserStorage {
           .add(const Duration(days: 1))
           .subtract(const Duration(milliseconds: 1));
 
-      // Fetch all pending appointments for the same user on the same date
-      // QuerySnapshot pendingAppointments = await db
-      //     .collection("users")
-      //     .doc("members")
-      //     .collection(userID)
-      //     .doc("Event")
-      //     .collection("Pending Appointment")
-      //     .where('date', isGreaterThanOrEqualTo: startOfDay)
-      //     .where('date', isLessThanOrEqualTo: endOfDay)
-      //     .get();
-
-      QuerySnapshot pendingAppointments = await db.collection("users").get();
+      QuerySnapshot pendingAppointments = await db.collection("users").get(); // Fake initialize lang kay para sureball naay sulod.
 
       // kuhaon ang tanan pending request na same ang date
       List<String> userIDNames = [];
@@ -305,7 +294,7 @@ class UserStorage {
             log("Skipping appointment $cleanAppointmentId as it is the approved one.");
           } else {
             log("Denying appointment $cleanAppointmentId for user $userID because it conflicts with the approved appointment.");
-            await denyAppointment(userAppointmentID, appointmentId);
+            await denyAppointment(userAppointmentID, appointmentId,true);
           }
         }
       }
@@ -332,7 +321,7 @@ class UserStorage {
     }
   }
 
-  Future<void> denyAppointment(String userID, String appointmentId) async {
+  Future<void> denyAppointment(String userID, String appointmentId,bool isRescheduled) async {
     try {
       DocumentSnapshot appointmentDoc = await db
           .collection("users")
@@ -352,7 +341,7 @@ class UserStorage {
           .collection("Pending Appointment")
           .doc(appointmentId)
           .update({'status': 'Denied'});
-      await setNotification(userID, appointmentId);
+      await setNotification(userID, appointmentId,isRescheduled);
 
       // Move appointment to 'Denied Appointment' collection
       await db
@@ -386,7 +375,7 @@ class UserStorage {
     return db.collectionGroup("Church Event").snapshots();
   }
 
-  Future<void> setNotification(String uid, String appointmentId) async {
+  Future<void> setNotification(String uid, String appointmentId,bool isRescheduled) async {
     DocumentSnapshot documentSnapshot = await db
         .collection("users")
         .doc("members")
@@ -407,6 +396,7 @@ class UserStorage {
       'title': 'Appointment Update',
       'body': 'Your appointment is pending. Please confirm.',
       'imageUrl': 'https://example.com/notification-image.jpg',
+      'isRescheduled': isRescheduled
     });
   }
 

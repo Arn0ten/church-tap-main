@@ -108,36 +108,36 @@ class _AdminApprovalState extends State<AdminApproval> {
   }
 
   Future<void> _performDenyAppointment(
-      String appointmentId, String userID) async {
+      String appointmentId, String userID,bool isRescheduled) async {
     try {
-      await userStorage.denyAppointment(userID, appointmentId);
+      await userStorage.denyAppointment(userID, appointmentId,isRescheduled);
     } catch (e) {
       log("Error performing denied appointment: $e");
       throw Exception("Error performing denied appointment.");
     }
   }
 
-  Future<void> approvedAppointment(String appointmentId, String userID) async {
-    try {
-      await DialogHelper.showLoadingDialog(context, "Approving appointment...");
-      await _performApprovedAppointment(userID, appointmentId);
-      DialogHelper.showSnackBar(context, "Appointment successfully approved.");
-    } catch (e) {
-      log("Error approving appointment: $e");
-      DialogHelper.showSnackBar(context, "Error approving appointment.");
-    }
-  }
+  // Future<void> approvedAppointment(String appointmentId, String userID) async {
+  //   try {
+  //     await DialogHelper.showLoadingDialog(context, "Approving appointment...");
+  //     await _performApprovedAppointment(userID, appointmentId);
+  //     DialogHelper.showSnackBar(context, "Appointment successfully approved.");
+  //   } catch (e) {
+  //     log("Error approving appointment: $e");
+  //     DialogHelper.showSnackBar(context, "Error approving appointment.");
+  //   }
+  // }
 
-  Future<void> denyAppointment(String appointmentId, String userID) async {
-    try {
-      await DialogHelper.showLoadingDialog(context, "Denying appointment...");
-      await _performDenyAppointment(userID, appointmentId);
-      DialogHelper.showSnackBar(context, "Appointment successfully denied.");
-    } catch (e) {
-      log("Error denying appointment: $e");
-      DialogHelper.showSnackBar(context, "Error denying appointment.");
-    }
-  }
+  // Future<void> denyAppointment(String appointmentId, String userID) async {
+  //   try {
+  //     await DialogHelper.showLoadingDialog(context, "Denying appointment...");
+  //     await _performDenyAppointment(userID, appointmentId,false);
+  //     DialogHelper.showSnackBar(context, "Appointment successfully denied.");
+  //   } catch (e) {
+  //     log("Error denying appointment: $e");
+  //     DialogHelper.showSnackBar(context, "Error denying appointment.");
+  //   }
+  // }
 
   List<DocumentSnapshot> sortAppointmentsByMonth(QuerySnapshot snapshot) {
     List<DocumentSnapshot> appointments = snapshot.docs;
@@ -427,7 +427,7 @@ class _AdminApprovalState extends State<AdminApproval> {
                           DialogHelper.showSnackBar(context, "Appointment successfully approved.");
                         } else {
                           // Handle denial of the appointment
-                          await _performDenyAppointment(appointmentId, userID);
+                          await _performDenyAppointment(appointmentId, userID, false); // TODO Confusing Action
                           DialogHelper.showSnackBar(context, "Appointment successfully denied.");
                         }
 
@@ -860,10 +860,6 @@ class _AdminApprovalState extends State<AdminApproval> {
                                                                   ),
                                                                 ],
                                                               ),
-
-
-
-
                                                           ],
                                                         ),
                                                       ],
