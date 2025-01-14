@@ -352,8 +352,8 @@ class UserStorage {
         .collection("Pending Appointment")
         .doc(appointmentId)
         .get();
-    await db.
-    collection("users")
+    await db
+        .collection("users")
         .doc('members')
         .collection(uid)
         .doc('Event')
@@ -428,6 +428,7 @@ class UserStorage {
   }
 
 
-
+// Function to suggest reschedule and notify the owner
+  // Method to suggest rescheduling
 
 }
