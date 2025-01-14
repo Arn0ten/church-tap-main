@@ -842,36 +842,21 @@ class _AdminApprovalState extends State<AdminApproval> {
                                                                   ),
                                                                 ],
                                                               ),
-                                                            if (!isHighestPriority)
-                                                              Row(
+                                                            if (!isHighestPriority) //TODO diri ang reschedule
+                                                              const Row(
                                                                 mainAxisAlignment:
                                                                 MainAxisAlignment
                                                                     .spaceBetween,
                                                                 children: [
-                                                                  Container(
-                                                                    padding: const EdgeInsets
-                                                                        .symmetric(
-                                                                        horizontal:
-                                                                        8,
-                                                                        vertical:
-                                                                        4),
-                                                                    decoration:
-                                                                    BoxDecoration(
-                                                                      color: Colors.red,
-                                                                      borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                          20),
-                                                                    ),
-                                                                    child:
-                                                                    const Text(
-                                                                      'Standard Priority',
-                                                                      style: TextStyle(
-                                                                          color: Colors
-                                                                              .white,
-                                                                          fontSize:
-                                                                          12),
-                                                                    ),
+                                                                  Text(
+                                                                    'Reschedule',
+                                                                    style: TextStyle(
+                                                                      decorationColor: Colors.red,
+                                                                      decoration: TextDecoration.underline,
+                                                                        color: Colors
+                                                                            .red,
+                                                                        fontSize:
+                                                                        12),
                                                                   ),
                                                                 ],
                                                               ),
