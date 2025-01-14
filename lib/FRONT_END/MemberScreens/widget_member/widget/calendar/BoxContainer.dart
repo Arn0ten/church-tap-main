@@ -17,8 +17,8 @@ class Boxcontainer extends StatelessWidget {
           shrinkWrap: true,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            crossAxisSpacing: 8.0,
-            mainAxisSpacing: 15.0,
+            crossAxisSpacing: 40.0, //vertical
+            mainAxisSpacing: 15.0, //horizontal
           ),
           itemBuilder: (context, index) => customContainer(index),
         ));
@@ -27,14 +27,14 @@ class Boxcontainer extends StatelessWidget {
   TextStyle titleFont() {
     return const TextStyle(
       fontWeight: FontWeight.bold,
-      fontSize: 20,
+      fontSize: 17,
     );
   }
 
   TextStyle contentFont() {
     return const TextStyle(
       fontWeight: FontWeight.bold,
-      fontSize: 20,
+      fontSize: 24,
     );
   }
 
@@ -46,14 +46,32 @@ class Boxcontainer extends StatelessWidget {
       'Max Wind Speed': weather.wind_speed,
     };
     return Container(
-      color: Colors.green.shade400,
+      decoration: const BoxDecoration(boxShadow: [
+        BoxShadow(
+            color: Colors.grey,
+            blurRadius: 5,
+            spreadRadius: 5,
+            blurStyle: BlurStyle.outer)
+      ]),
       child: Column(
         children: [
-          Text(title[index]),
+          Padding(
+            padding: const EdgeInsets.only(top: 15),
+            child: FittedBox(
+              fit: BoxFit.fitWidth,
+              child: Text(
+                title[index],
+                style: titleFont(),
+              ),
+            ),
+          ),
           const SizedBox(
             height: 10,
           ),
-          Text('${map[title[index]]}${signs[index]}')
+          Text(
+            '${map[title[index]]}${signs[index]}',
+            style: contentFont(),
+          )
         ],
       ),
     );
