@@ -652,7 +652,7 @@ class _AdminApprovalState extends State<AdminApproval> {
                                                         horizontal: 8,
                                                         vertical: 4),
                                                     decoration: BoxDecoration(
-                                                      color: Colors.red,
+                                                      color: Colors.green,
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                               20),
@@ -794,54 +794,91 @@ class _AdminApprovalState extends State<AdminApproval> {
                                                         ),
                                                         const SizedBox(
                                                             height: 16),
-                                                        if (isHighestPriority)
-                                                          Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .spaceBetween,
-                                                            children: [
-                                                              Container(
-                                                                padding: const EdgeInsets
-                                                                    .symmetric(
-                                                                    horizontal:
-                                                                        8,
-                                                                    vertical:
-                                                                        4),
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  color: Colors
-                                                                      .red,
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              20),
-                                                                ),
-                                                                child:
-                                                                    const Text(
-                                                                  'High Priority',
-                                                                  style: TextStyle(
-                                                                      color: Colors
-                                                                          .white,
-                                                                      fontSize:
-                                                                          12),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
+
                                                         Row(
                                                           mainAxisAlignment:
                                                               MainAxisAlignment
                                                                   .spaceBetween,
                                                           children: [
-                                                            const SizedBox(
-                                                                height: 16),
+
                                                             Text(
                                                               'Date: $dateKey',
                                                               style: const TextStyle(
                                                                   fontSize: 14,
                                                                   color: Colors
                                                                       .grey),
+
                                                             ),
+                                                            if (isHighestPriority)
+                                                              Row(
+                                                                mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                                children: [
+                                                                  Container(
+                                                                    padding: const EdgeInsets
+                                                                        .symmetric(
+                                                                        horizontal:
+                                                                        8,
+                                                                        vertical:
+                                                                        4),
+                                                                    decoration:
+                                                                    BoxDecoration(
+                                                                      color: appGreen,
+                                                                      borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                          20),
+                                                                    ),
+                                                                    child:
+                                                                    const Text(
+                                                                      'High Priority',
+                                                                      style: TextStyle(
+                                                                          color: Colors
+                                                                              .white,
+                                                                          fontSize:
+                                                                          12),
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            if (!isHighestPriority)
+                                                              Row(
+                                                                mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                                children: [
+                                                                  Container(
+                                                                    padding: const EdgeInsets
+                                                                        .symmetric(
+                                                                        horizontal:
+                                                                        8,
+                                                                        vertical:
+                                                                        4),
+                                                                    decoration:
+                                                                    BoxDecoration(
+                                                                      color: Colors.red,
+                                                                      borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                          20),
+                                                                    ),
+                                                                    child:
+                                                                    const Text(
+                                                                      'Standard Priority',
+                                                                      style: TextStyle(
+                                                                          color: Colors
+                                                                              .white,
+                                                                          fontSize:
+                                                                          12),
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+
+
+
+
                                                           ],
                                                         ),
                                                       ],
@@ -896,23 +933,37 @@ class _AdminApprovalState extends State<AdminApproval> {
                                                 const SizedBox(height: 5),
                                                 if (isHighestPriority)
                                                   Container(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 4),
+                                                    padding: const EdgeInsets.symmetric(
+                                                        horizontal: 8, vertical: 4),
                                                     decoration: BoxDecoration(
-                                                      color: Colors.red,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              20),
+                                                      color: Colors.green,
+                                                      borderRadius: BorderRadius.circular(20),
                                                     ),
                                                     child: const Text(
                                                       'High Priority',
                                                       style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 12),
+                                                        color: Colors.white,
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                  )
+                                                else
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(
+                                                        horizontal: 8, vertical: 4),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.red, // Different color for "Reschedule"
+                                                      borderRadius: BorderRadius.circular(20),
+                                                    ),
+                                                    child: const Text(
+                                                      'Standard Priority',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 12,
+                                                      ),
                                                     ),
                                                   ),
+                                                const SizedBox(height: 4),
                                               ],
                                             ),
                                           ),
@@ -958,6 +1009,13 @@ class _AdminApprovalState extends State<AdminApproval> {
                                               overflow: TextOverflow
                                                   .ellipsis, // Adds ellipsis if the text exceeds 2 lines
                                             ),
+                                            Row(
+                                              children: [
+
+                                              ],
+                                            ),
+                                            // Display "Suggest to Reschedule" if not high priority
+
                                           ],
                                         ),
                                       ),

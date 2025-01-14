@@ -306,8 +306,8 @@ class _CustomCalendarState extends State<CustomCalendar> {
         onPressed: () => showModalBottomSheet(
             context: context,
             builder: (context) => WeatherSheetTab(
-                  weather: weather,
-                )),
+              weather: weather,
+            )),
         icon: const Icon(
           Icons.keyboard_arrow_up,
         ));
@@ -356,9 +356,9 @@ class _CustomCalendarState extends State<CustomCalendar> {
               color: calendarSelected,
               child: Center(
                   child: Text(
-                '${day.day}',
-                style: selectedText(),
-              ))),
+                    '${day.day}',
+                    style: selectedText(),
+                  ))),
         ),
         SizedBox(
           height: 30,
