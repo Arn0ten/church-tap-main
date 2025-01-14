@@ -55,13 +55,13 @@ class _NotificationTabState extends State<NotificationTab> {
       }
       // Optionally show a confirmation
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('All notifications marked as read.')),
+        const SnackBar(content: Text('All notifications marked as read.')),
       );
     } catch (e) {
       // Handle errors
       print('Error marking notifications as read: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error marking notifications as read.')),
+        const SnackBar(content: Text('Error marking notifications as read.')),
       );
     }
   }
@@ -229,7 +229,7 @@ class _NotificationTabState extends State<NotificationTab> {
                                     Expanded(
                                       child: Text(
                                         notif['appointmenttype'],
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           fontWeight: FontWeight.w900,
                                           fontSize: 20,
                                           color: Colors.black87,
@@ -272,9 +272,9 @@ class _NotificationTabState extends State<NotificationTab> {
 
                                 Row(
                                   children: [
-                                    Text(
+                                    const Text(
                                       'Date: ',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 15,
                                         color: Colors.black87,
@@ -293,9 +293,9 @@ class _NotificationTabState extends State<NotificationTab> {
 
                                 Row(
                                   children: [
-                                    Text(
+                                    const Text(
                                       'Time: ',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 15,
                                         color: Colors.black87,
@@ -304,16 +304,48 @@ class _NotificationTabState extends State<NotificationTab> {
                                     Text(
                                       notif['status'] == 'Denied'
                                           ? 'Admin suggests you to reschedule'
-                                          : '9:30 AM onwards',
-                                      style: const TextStyle(
+                                          : '9:30 AM onwards', // Default value
+                                      style: TextStyle(
                                         fontSize: 14,
-                                        color: Colors.black54,
-                                        fontWeight: FontWeight.normal,
+                                        fontWeight: notif['status'] == 'Denied' ? FontWeight.bold : FontWeight.normal,
+                                        color: notif['status'] == 'Denied' ? Colors.red : Colors.black54,
                                       ),
                                     ),
                                   ],
                                 ),
 
+
+                                const SizedBox(height: 2),
+                                if (notif['status'] == 'Denied')
+                                  GestureDetector(
+                                    onTap: () {
+                                      // Navigate to the edit appointment page
+                                      Navigator.pushNamed(context, '/editAppointment', arguments: doc.id);
+                                    },
+                                    child: const Row(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+
+                                        Text(
+                                          'Reason:  ',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+
+                                        ),
+                                        Text(
+                                          '"Conflicts with higher priority appointment."',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.red,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 const SizedBox(height: 2),
 
                                 Text.rich(
@@ -339,35 +371,7 @@ class _NotificationTabState extends State<NotificationTab> {
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                if (notif['status'] == 'Denied')
-                                      GestureDetector(
-                                        onTap: () {
-                                          // Navigate to the edit appointment page
-                                          Navigator.pushNamed(context, '/editAppointment', arguments: doc.id);
-                                        },
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.start,
-                                          children: [
 
-                                            Text(
-                                              'Reason:  ',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.black,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-
-                                            ),
-                                            Text(
-                                              '       "Conflicts with other that has a higher priority."',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.red,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
