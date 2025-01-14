@@ -345,6 +345,7 @@ class _EventPageState extends State<EventPage> {
                           color: Colors.green.shade200,
                           elevation: 2,
                           margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+
                           child: ListTile(
                             contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                             title: Row(
@@ -489,7 +490,7 @@ class _EventPageState extends State<EventPage> {
               ),
           const SizedBox(height: 10),
           const Padding(
-            padding: EdgeInsets.all(8.0),
+            padding: EdgeInsets.only(top: 2,bottom: 2),
             child: Text(
               'Pending Requests',
               style: TextStyle(
@@ -634,11 +635,8 @@ class _EventPageState extends State<EventPage> {
                           }
                           return Card(
                             color: Colors.amber.shade200,
-                            elevation: 5,
-                            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            elevation: 2,
+                            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                             child: ListTile(
                               contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                               title: Row(

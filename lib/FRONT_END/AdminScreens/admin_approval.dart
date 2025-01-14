@@ -894,12 +894,8 @@ class _AdminApprovalState extends State<AdminApproval> {
                                   },
                                   child: Card(
                                     color: Colors.amber.shade200,
-                                    elevation: 5,
-                                    margin: const EdgeInsets.symmetric(
-                                        vertical: 8, horizontal: 16),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
+                                    elevation: 2,
+                                    margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                                     child: ListTile(
                                       contentPadding:
                                           const EdgeInsets.symmetric(

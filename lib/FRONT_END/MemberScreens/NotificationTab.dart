@@ -339,35 +339,35 @@ class _NotificationTabState extends State<NotificationTab> {
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-
                                 if (notif['status'] == 'Denied')
-                                  GestureDetector(
-                                    onTap: () {
-                                      // Navigate to the edit appointment page
-                                      Navigator.pushNamed(context, '/editAppointment', arguments: doc.id);
-                                    },
-                                    child: Row(
-                                      children: [
-                                        Text(
-                                          'Reason:  ',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                      GestureDetector(
+                                        onTap: () {
+                                          // Navigate to the edit appointment page
+                                          Navigator.pushNamed(context, '/editAppointment', arguments: doc.id);
+                                        },
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.start,
+                                          children: [
 
-                                        ),
-                                        Text(
-                                          '"Conflicts with other that has a higher priority."',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.red,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                                            Text(
+                                              'Reason:  ',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.bold,
+                                              ),
 
+                                            ),
+                                            Text(
+                                              '       "Conflicts with other that has a higher priority."',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
