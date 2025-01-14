@@ -366,25 +366,24 @@ class _AdminApprovalState extends State<AdminApproval> {
                     });
                   }
 
-                  Future<void> handleAppointmentAction(String appointmentId,
-                      String userID, bool isApprove) async {
+                  Future<void> handleAppointmentAction(String appointmentId, String userID, bool isApprove) async {
+                    // Determine the action text based on approval status
                     String action = isApprove ? "approve" : "deny";
+
+                    // Show confirmation dialog for approval/denial
                     bool? confirmation = await showDialog<bool>(
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
                           title: Text("Confirm Action"),
-                          content: Text(
-                              "Are you sure you want to $action this appointment?"),
+                          content: Text("Are you sure you want to $action this appointment?"),
                           actions: [
                             TextButton(
-                              onPressed: () => Navigator.of(context).pop(false),
-                              // Cancel
+                              onPressed: () => Navigator.of(context).pop(false),  // Cancel action
                               child: Text("Cancel"),
                             ),
                             TextButton(
-                              onPressed: () => Navigator.of(context).pop(true),
-                              // Confirm
+                              onPressed: () => Navigator.of(context).pop(true),  // Confirm action
                               child: Text("Confirm"),
                             ),
                           ],
@@ -394,37 +393,66 @@ class _AdminApprovalState extends State<AdminApproval> {
 
                     if (confirmation == true) {
                       try {
-                        String actionMessage = isApprove
-                            ? "Approving appointment..."
-                            : "Denying appointment...";
-                        await DialogHelper.showLoadingDialog(
-                            context, actionMessage);
-                        //TODO mag add sa auto deny here
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (BuildContext context) {
+                            return Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  LoadingAnimationWidget.staggeredDotsWave(
+                                    color: appGreen,
+                                    size: 50.0,
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    isApprove ? "Approving appointment..." : "Denying appointment...",
+                                    style: const TextStyle(fontSize: 16, color: appWhite),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+
+                        // Handle the case where the appointment is being approved
                         if (isApprove) {
-                          // DAPAT NASA TAAS NI SIYA PARA MAKITA PA NIYA ANG DOCUMENT BEFORE ACCEPTING
-                          await userStorage.removeSameDateIfAccepted(
-                              userID, appointmentId);
-                          await _performApprovedAppointment(
-                              appointmentId, userID);
-                          DialogHelper.showSnackBar(
-                              context, "Appointment successfully approved.");
+                          // Call the method to deny appointments on the same date except the approved one
+                          // await userStorage.removeSameDateIfAccepted(userID, appointmentId);
+                          // Proceed with approving the appointment
+                          await _performApprovedAppointment(appointmentId, userID);
+
+                          // Show success message to the user
+                          DialogHelper.showSnackBar(context, "Appointment successfully approved.");
                         } else {
+                          // Handle denial of the appointment
                           await _performDenyAppointment(appointmentId, userID);
-                          DialogHelper.showSnackBar(
-                              context, "Appointment successfully denied.");
+                          DialogHelper.showSnackBar(context, "Appointment successfully denied.");
                         }
 
-                        // Refresh the priority list after an action
+                        // Refresh the appointment list after performing the action
                         refreshAppointments();
+
+                        // Dismiss the loading dialog
+                        Navigator.of(context).pop();
+
                       } catch (e) {
+                        // Handle any errors that occur during the approval/denial process
                         String errorMessage = isApprove
                             ? "Error approving appointment."
                             : "Error denying appointment.";
                         log("$errorMessage: $e");
                         DialogHelper.showSnackBar(context, errorMessage);
+
+                        // Dismiss the loading dialog if there's an error
+                        Navigator.of(context).pop();
                       }
                     }
                   }
+
+
+
 
                   // Group appointments by date
                   Map<String, List<DocumentSnapshot>> groupedAppointments =
@@ -624,7 +652,7 @@ class _AdminApprovalState extends State<AdminApproval> {
                                                         horizontal: 8,
                                                         vertical: 4),
                                                     decoration: BoxDecoration(
-                                                      color: Colors.red,
+                                                      color: Colors.green,
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                               20),
@@ -766,54 +794,91 @@ class _AdminApprovalState extends State<AdminApproval> {
                                                         ),
                                                         const SizedBox(
                                                             height: 16),
-                                                        if (isHighestPriority)
-                                                          Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .spaceBetween,
-                                                            children: [
-                                                              Container(
-                                                                padding: const EdgeInsets
-                                                                    .symmetric(
-                                                                    horizontal:
-                                                                        8,
-                                                                    vertical:
-                                                                        4),
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  color: Colors
-                                                                      .red,
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              20),
-                                                                ),
-                                                                child:
-                                                                    const Text(
-                                                                  'High Priority',
-                                                                  style: TextStyle(
-                                                                      color: Colors
-                                                                          .white,
-                                                                      fontSize:
-                                                                          12),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
+
                                                         Row(
                                                           mainAxisAlignment:
                                                               MainAxisAlignment
                                                                   .spaceBetween,
                                                           children: [
-                                                            const SizedBox(
-                                                                height: 16),
+
                                                             Text(
                                                               'Date: $dateKey',
                                                               style: const TextStyle(
                                                                   fontSize: 14,
                                                                   color: Colors
                                                                       .grey),
+
                                                             ),
+                                                            if (isHighestPriority)
+                                                              Row(
+                                                                mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                                children: [
+                                                                  Container(
+                                                                    padding: const EdgeInsets
+                                                                        .symmetric(
+                                                                        horizontal:
+                                                                        8,
+                                                                        vertical:
+                                                                        4),
+                                                                    decoration:
+                                                                    BoxDecoration(
+                                                                      color: appGreen,
+                                                                      borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                          20),
+                                                                    ),
+                                                                    child:
+                                                                    const Text(
+                                                                      'High Priority',
+                                                                      style: TextStyle(
+                                                                          color: Colors
+                                                                              .white,
+                                                                          fontSize:
+                                                                          12),
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            if (!isHighestPriority)
+                                                              Row(
+                                                                mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                                children: [
+                                                                  Container(
+                                                                    padding: const EdgeInsets
+                                                                        .symmetric(
+                                                                        horizontal:
+                                                                        8,
+                                                                        vertical:
+                                                                        4),
+                                                                    decoration:
+                                                                    BoxDecoration(
+                                                                      color: Colors.red,
+                                                                      borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                          20),
+                                                                    ),
+                                                                    child:
+                                                                    const Text(
+                                                                      'Standard Priority',
+                                                                      style: TextStyle(
+                                                                          color: Colors
+                                                                              .white,
+                                                                          fontSize:
+                                                                          12),
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+
+
+
+
                                                           ],
                                                         ),
                                                       ],
@@ -868,23 +933,37 @@ class _AdminApprovalState extends State<AdminApproval> {
                                                 const SizedBox(height: 5),
                                                 if (isHighestPriority)
                                                   Container(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 4),
+                                                    padding: const EdgeInsets.symmetric(
+                                                        horizontal: 8, vertical: 4),
                                                     decoration: BoxDecoration(
-                                                      color: Colors.red,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              20),
+                                                      color: Colors.green,
+                                                      borderRadius: BorderRadius.circular(20),
                                                     ),
                                                     child: const Text(
                                                       'High Priority',
                                                       style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 12),
+                                                        color: Colors.white,
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                  )
+                                                else
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(
+                                                        horizontal: 8, vertical: 4),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.red, // Different color for "Reschedule"
+                                                      borderRadius: BorderRadius.circular(20),
+                                                    ),
+                                                    child: const Text(
+                                                      'Standard Priority',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 12,
+                                                      ),
                                                     ),
                                                   ),
+                                                const SizedBox(height: 4),
                                               ],
                                             ),
                                           ),
@@ -930,6 +1009,13 @@ class _AdminApprovalState extends State<AdminApproval> {
                                               overflow: TextOverflow
                                                   .ellipsis, // Adds ellipsis if the text exceeds 2 lines
                                             ),
+                                            Row(
+                                              children: [
+
+                                              ],
+                                            ),
+                                            // Display "Suggest to Reschedule" if not high priority
+
                                           ],
                                         ),
                                       ),

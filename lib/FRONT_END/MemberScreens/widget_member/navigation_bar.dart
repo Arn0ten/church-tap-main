@@ -43,6 +43,13 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  //i taga zero sa counter hahahah
+  void _resetNotificationCount() {
+    setState(() {
+      _notificationCount = 0;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,53 +64,53 @@ class _HomePageState extends State<HomePage> {
         child: BottomNavigationBar(
           elevation: 6,
           backgroundColor: appGreen2,
-          selectedItemColor: appWhite,
+          selectedItemColor: appBlack,
           unselectedItemColor: appWhite,
           type: BottomNavigationBarType.fixed,
           iconSize: 20.0,
           selectedFontSize: 12.0,
           unselectedFontSize: 12.0,
+
           onTap: (int value) {
             setState(() {
               _currentTab = value;
+              if (value == 0) {
+                _resetNotificationCount();
+              }else if(value == 1) {
+                _resetNotificationCount();
+              }else if(value == 2) {
+                _resetNotificationCount();
+              }else if(value == 3) {
+                _resetNotificationCount();
+              }
             });
           },
+
           currentIndex: _currentTab,
           items: [
-            const BottomNavigationBarItem(
+            BottomNavigationBarItem(
               icon: Icon(
                 Icons.home,
                 size: 20,
+                color: _currentTab == 0 ? appBlack : appWhite, // Set icon color based on selection
               ),
               label: 'Home',
-              activeIcon: Text(
-                "",
-                style: TextStyle(
-                  fontSize: 8,
-                  color: appWhite,
-                ),
-              ),
             ),
-            const BottomNavigationBarItem(
+            BottomNavigationBarItem(
               icon: Icon(
                 Icons.event_available,
                 size: 20,
+                color: _currentTab == 1 ? appBlack : appWhite, // Set icon color based on selection
               ),
               label: 'Appointment',
-              activeIcon: Text(
-                "",
-                style: TextStyle(
-                  fontSize: 8,
-                  color: appWhite,
-                ),
-              ),
             ),
             BottomNavigationBarItem(
               icon: Stack(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.notifications,
                     size: 20,
+                    color: _currentTab == 2 ? appBlack : appWhite, // Set icon color based on selection
                   ),
                   if (_notificationCount > 0)
                     Positioned(
@@ -131,27 +138,14 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
               label: 'Notifications',
-              activeIcon: const Text(
-                "",
-                style: TextStyle(
-                  fontSize: 8,
-                  color: appWhite,
-                ),
-              ),
             ),
-            const BottomNavigationBarItem(
+            BottomNavigationBarItem(
               icon: Icon(
                 Icons.person,
                 size: 20,
+                color: _currentTab == 3 ? appBlack : appWhite, // Set icon color based on selection
               ),
               label: 'Profile',
-              activeIcon: Text(
-                "",
-                style: TextStyle(
-                  fontSize: 8,
-                  color: appWhite,
-                ),
-              ),
             ),
           ],
         ),
