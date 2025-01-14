@@ -302,7 +302,9 @@ class _NotificationTabState extends State<NotificationTab> {
                                       ),
                                     ),
                                     Text(
-                                      '9:30 AM onwards',
+                                      notif['status'] == 'Denied'
+                                          ? 'Admin suggests you to reschedule'
+                                          : '9:30 AM onwards', // Default value
                                       style: const TextStyle(
                                         fontSize: 14,
                                         color: Colors.black54,
@@ -311,6 +313,7 @@ class _NotificationTabState extends State<NotificationTab> {
                                     ),
                                   ],
                                 ),
+
                                 const SizedBox(height: 2),
 
                                 Text.rich(
