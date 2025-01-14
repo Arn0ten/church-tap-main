@@ -359,7 +359,12 @@ class UserStorage {
         .doc('Event')
         .collection('Notification')
         .doc(appointmentId)
-        .set(documentSnapshot.data() as Map<String, dynamic>);
+        .set({
+      ...documentSnapshot.data() as Map<String, dynamic>,
+      'title': 'Appointment Update',
+      'body': 'Your appointment is pending. Please confirm.',
+      'imageUrl': 'https://example.com/notification-image.jpg',
+    });
   }
 
   Stream<QuerySnapshot> getNotification(String uid) {
