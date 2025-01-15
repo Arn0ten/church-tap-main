@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:bethel_app_final/BACK_END/Services/Functions/Authentication.dart';
 import 'package:bethel_app_final/BACK_END/Services/Functions/Users.dart';
+import 'package:bethel_app_final/FRONT_END/MemberScreens/profile_page.dart';
 import 'package:bethel_app_final/FRONT_END/constant/color.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -14,12 +15,14 @@ class EditEvent extends StatefulWidget {
   final DateTime lastDate;
   final String documentId;
   final bool isAdmin;
-  const EditEvent(
+    QueryDocumentSnapshot? passDocument;
+  EditEvent(
       {Key? key,
-        required this.firstDate,
-        required this.lastDate,
-        required this.documentId,
-        required this.isAdmin})
+      required this.firstDate,
+      required this.lastDate,
+      required this.documentId,
+      required this.isAdmin,
+      this.passDocument})
       : super(key: key);
 
   @override
@@ -36,8 +39,10 @@ class _EditEventState extends State<EditEvent> {
   UserStorage storage = UserStorage();
   TapAuth auth = TapAuth();
   bool isCustomAppointment = false;
+  bool isFromNotification = false;
 
-  final TextEditingController _customAppointmentController = TextEditingController();
+  final TextEditingController _customAppointmentController =
+      TextEditingController();
 
   @override
   void dispose() {
@@ -57,11 +62,13 @@ class _EditEventState extends State<EditEvent> {
     _getDocument = fetchdocument(widget.documentId);
     _selectedDate = widget.firstDate;
   }
+
   bool _isDataInitialized = false;
 
   @override
   @override
   Widget build(BuildContext context) {
+    log('${widget.documentId}');
     return Scaffold(
       appBar: AppBar(title: const Text("Edit Event")),
       body: Padding(
@@ -91,7 +98,8 @@ class _EditEventState extends State<EditEvent> {
                   isCustomAppointment = true;
                   _customAppointmentController.text = appointmentType;
                 }
-                _selectedDate = (document['date'] as Timestamp?)?.toDate() ?? widget.firstDate;
+                _selectedDate = (document['date'] as Timestamp?)?.toDate() ??
+                    widget.firstDate;
                 _isDataInitialized = true; // Mark data as initialized
               }
 
@@ -105,13 +113,10 @@ class _EditEventState extends State<EditEvent> {
     );
   }
 
-
-
-  Future<Map<String,dynamic>> fetchdocument(String documentID) async {
-    var map = <String,dynamic>{};
+  Future<Map<String, dynamic>> fetchdocument(String documentID) async {
+    var map = <String, dynamic>{};
     if (widget.isAdmin == true) {
-      await storage.db.collectionGroup("Church Event").get()
-          .then((value) {
+      await storage.db.collectionGroup("Church Event").get().then((value) {
         for (var element in value.docs) {
           if (element.id == widget.documentId) {
             map = element.data();
@@ -119,22 +124,45 @@ class _EditEventState extends State<EditEvent> {
         }
       });
     } else {
-      await storage.db.collection("users")
+      await storage.db
+          .collection("users")
           .doc("members")
           .collection(auth.auth.currentUser!.uid)
           .doc("Event")
           .collection("Pending Appointment")
-          .get().then((value) {
+          .get()
+          .then((value) {
         for (var element in value.docs) {
           if (element.id == widget.documentId) {
             map = element.data();
           }
         }
       });
+      if (map.isEmpty) {
+        try {
+          await storage.db
+              .collection("users")
+              .doc("members")
+              .collection(auth.auth.currentUser!.uid)
+              .doc("Event")
+              .collection("Notification")
+              .get()
+              .then((value) {
+            for (var element in value.docs) {
+              if (element.id == widget.documentId) {
+                map = element.data();
+              }
+            }
+          });
+          isFromNotification = true;
+        } catch (e) {
+          log('YOU ARE DOING GODS WORK! ERROR HAPPENED!');
+          throw 'Error!';
+        }
+      }
     }
     return map;
   }
-
 
   Future<String> fetchdisc() async {
     String localdesc = '';
@@ -147,7 +175,7 @@ class _EditEventState extends State<EditEvent> {
         .doc(widget.documentId)
         .get()
         .then(
-          (value) {
+      (value) {
         localdesc = value.data()?['description'];
       },
     );
@@ -157,65 +185,65 @@ class _EditEventState extends State<EditEvent> {
   // Function to get the icon for each appointment type
   Icon getAppointmentIcon(String appointmentType) {
     switch (appointmentType) {
-    // Religious Services
+      // Religious Services
       case 'Sunday Service':
       case 'Christmas Service':
         return Icon(FontAwesomeIcons.church, color: Colors.pink.shade800);
       case 'Easter Service':
         return const Icon(FontAwesomeIcons.egg, color: Colors.deepPurple);
 
-    // Ceremonies
+      // Ceremonies
       case 'Wedding Ceremony':
         return Icon(FontAwesomeIcons.heart, color: Colors.red.shade800);
       case 'Funeral Service':
         return Icon(FontAwesomeIcons.skullCrossbones,
             color: Colors.grey.shade800);
 
-    // Baptism and Communion
+      // Baptism and Communion
       case 'Baptism':
       case 'Communion Service':
       case 'Infant Dedication':
         return Icon(FontAwesomeIcons.dove, color: Colors.deepPurple);
 
-    // Visits and Missionary Work
+      // Visits and Missionary Work
       case 'Pastoral Visit':
       case 'Missionary Work':
         return Icon(FontAwesomeIcons.businessTime, color: Colors.blue.shade800);
 
-    // Prayer and Fellowship
+      // Prayer and Fellowship
       case 'Prayer Meeting':
         return Icon(FontAwesomeIcons.handsPraying, color: Colors.teal.shade800);
       case 'Youth Fellowship':
       case 'Bible Study':
         return Icon(FontAwesomeIcons.bookOpen, color: Colors.orange.shade800);
 
-    // Church and Community
+      // Church and Community
       case 'Church Anniversary':
       case 'Community Outreach':
         return Icon(FontAwesomeIcons.peopleCarryBox,
             color: Colors.purple.shade800);
 
-    // Music and Choir
+      // Music and Choir
       case 'Choir Practice':
         return Icon(FontAwesomeIcons.music, color: Colors.green.shade800);
 
-    // Meals and Socials
+      // Meals and Socials
       case 'Fellowship Meal':
         return Icon(FontAwesomeIcons.utensils, color: Colors.brown.shade800);
       case 'Anniversary Service':
         return Icon(FontAwesomeIcons.cakeCandles,
             color: Colors.yellow.shade800);
 
-    // Certificates
+      // Certificates
       case 'Membership Certificate':
       case 'Baptismal Certificate':
         return Icon(FontAwesomeIcons.idCard, color: Colors.blueGrey.shade800);
 
-    // Birthday Service
+      // Birthday Service
       case 'Birthday Service':
         return Icon(FontAwesomeIcons.cakeCandles, color: Colors.pink.shade600);
 
-    // Default event icon
+      // Default event icon
       default:
         return Icon(FontAwesomeIcons.calendarDays,
             color: Colors.green.shade800);
@@ -354,7 +382,8 @@ class _EditEventState extends State<EditEvent> {
                     const Icon(Icons.calendar_today, color: Colors.blue),
                     const SizedBox(width: 8.0),
                     Text(
-                      "${_selectedDate.toLocal()}".split(' ')[0], // Display selected date
+                      "${_selectedDate.toLocal()}"
+                          .split(' ')[0], // Display selected date
                       style: const TextStyle(color: Colors.black),
                     ),
                   ],
@@ -378,11 +407,15 @@ class _EditEventState extends State<EditEvent> {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: DropdownButtonFormField<String>(
-            value: _selectedEventType.isNotEmpty ? _selectedEventType : null,
-            decoration: const InputDecoration(
+            value: isFromNotification
+                ? null
+                : (_selectedEventType.isNotEmpty ? _selectedEventType : null),
+            decoration: InputDecoration(
               labelText: "Event Type",
               border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+              contentPadding:
+                  const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+              enabled: !isFromNotification,
             ),
             items: _eventTypes.map((String value) {
               Icon eventIcon = getAppointmentIcon(value);
@@ -397,14 +430,16 @@ class _EditEventState extends State<EditEvent> {
                 ),
               );
             }).toList(),
-            onChanged: (String? newValue) {
-              setState(() {
-                _selectedEventType = newValue ?? '';
-                isCustomAppointment = false; // Explicitly set this to false
-                print('Dropdown updated to: $_selectedEventType');
-              });
-            },
-
+            onChanged: !isFromNotification
+                ? (String? newValue) {
+                    setState(() {
+                      _selectedEventType = newValue ?? '';
+                      isCustomAppointment =
+                          false; // Explicitly set this to false
+                      print('Dropdown updated to: $_selectedEventType');
+                    });
+                  }
+                : null, // Disables the dropdown functionality
           ),
         ),
 
@@ -421,15 +456,17 @@ class _EditEventState extends State<EditEvent> {
                 style: TextStyle(fontSize: 16),
               ),
               Checkbox(
-                value: isCustomAppointment,
-                onChanged: (bool? value) {
-                  setState(() {
-                    isCustomAppointment = value ?? false;
-                    if (!isCustomAppointment) {
-                      _customAppointmentController.clear();
-                    }
-                  });
-                },
+                value: isFromNotification ? false : isCustomAppointment,
+                onChanged: isFromNotification
+                    ? null // Disables the checkbox when `isFromNotification` is true
+                    : (bool? value) {
+                        setState(() {
+                          isCustomAppointment = value ?? false;
+                          if (!isCustomAppointment) {
+                            _customAppointmentController.clear();
+                          }
+                        });
+                      },
               ),
             ],
           ),
@@ -442,13 +479,13 @@ class _EditEventState extends State<EditEvent> {
               decoration: const InputDecoration(
                 labelText: "Enter Custom Appointment",
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                contentPadding:
+                    EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
               ),
             ),
           ),
 
         const Divider(),
-
 
         // Section: Description
         const Text(
@@ -461,6 +498,7 @@ class _EditEventState extends State<EditEvent> {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: TextFormField(
+            enabled: !isFromNotification,
             controller: _descController,
             maxLines: 4,
             decoration: const InputDecoration(
@@ -489,49 +527,57 @@ class _EditEventState extends State<EditEvent> {
                   ? _customAppointmentController.text.trim()
                   : _selectedEventType;
 
-              print('Saving Appointment Type: $newAppointmentType'); // Debug print
+              print(
+                  'Saving Appointment Type: $newAppointmentType'); // Debug print
               if (newAppointmentType.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Please provide an appointment type.")),
+                  const SnackBar(
+                      content: Text("Please provide an appointment type.")),
                 );
                 return;
               }
 
               // Show confirmation dialog before saving
               bool shouldSave = await showDialog<bool>(
-                context: context,
-                barrierDismissible: false, // Dialog cannot be dismissed by tapping outside
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: const Text("Confirm Save"),
-                    content: const Text("Are you sure you want to save this appointment type?"),
-                    actions: <Widget>[
-                      TextButton(
-                        child: const Text("Cancel"),
-                        onPressed: () {
-                          Navigator.of(context).pop(false); // Return false if canceled
-                        },
-                      ),
-                      TextButton(
-                        child: const Text("Confirm"),
-                        onPressed: () {
-                          Navigator.of(context).pop(true); // Return true if confirmed
-                        },
-                      ),
-                    ],
-                  );
-                },
-              ) ?? false;
+                    context: context,
+                    barrierDismissible:
+                        false, // Dialog cannot be dismissed by tapping outside
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text("Confirm Save"),
+                        content: const Text(
+                            "Are you sure you want to save this appointment type?"),
+                        actions: <Widget>[
+                          TextButton(
+                            child: const Text("Cancel"),
+                            onPressed: () {
+                              Navigator.of(context)
+                                  .pop(false); // Return false if canceled
+                            },
+                          ),
+                          TextButton(
+                            child: const Text("Confirm"),
+                            onPressed: () {
+                              Navigator.of(context)
+                                  .pop(true); // Return true if confirmed
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  ) ??
+                  false;
 
               if (shouldSave) {
-                await _saveChanges(newAppointmentType, _descController.text.trim());
+                await _saveChanges(
+                    newAppointmentType, _descController.text.trim());
                 Navigator.pop(context);
                 // Show Snackbar indicating the appointment is added
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Updated successfully!'),
+                  const SnackBar(
+                    content: Text('Updated successfully!'),
                     backgroundColor: Colors.blue,
-                    duration: const Duration(seconds: 2),
+                    duration: Duration(seconds: 2),
                   ),
                 );
               }
@@ -546,12 +592,9 @@ class _EditEventState extends State<EditEvent> {
             ),
           ),
         ),
-
-
       ],
     );
   }
-
 
   Future<List<String>> _fetchEventTypes() async {
     try {
@@ -590,6 +633,7 @@ class _EditEventState extends State<EditEvent> {
             : _selectedEventType,
         'date': _selectedDate,
       };
+      log(data.toString());
 
       if (widget.isAdmin) {
         await storage.db
@@ -602,24 +646,43 @@ class _EditEventState extends State<EditEvent> {
           }
         });
       } else {
-        await storage.db
-            .collection("users")
-            .doc("members")
-            .collection(auth.auth.currentUser!.uid)
-            .doc("Event")
-            .collection("Pending Appointment")
-            .doc(widget.documentId)
-            .update(data);
+        //TODO Fix email problems
+        if (isFromNotification != true) {
+          await storage.db
+              .collection("users")
+              .doc("members")
+              .collection(auth.auth.currentUser!.uid)
+              .doc("Event")
+              .collection("Pending Appointment")
+              .doc(widget.documentId)
+              .update(data);
+        } else {
+          Map<String, dynamic> holder =
+              widget.passDocument!.data() as Map<String, dynamic>;
+          List<String> removeOldKey = [
+            'body',
+            'imageUrl',
+            'isRead',
+            'status',
+            'title'
+          ];
+          for (String a in removeOldKey) {
+            holder.remove(a);
+          }
+          storage.createMemberEvent(
+              tapAuth.getCurrentUserUID(), holder, 'members');
+          storage.deleteNotification(
+              tapAuth.getCurrentUserUID(), widget.passDocument!.id);
+        }
       }
-
-
-
     } catch (e) {
       log("Error updating appointment: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to update appointment."),
+        const SnackBar(
+          content: Text("Failed to update appointment."),
           backgroundColor: Colors.red,
-          duration: const Duration(seconds: 2),),
+          duration: const Duration(seconds: 2),
+        ),
       );
     }
   }

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:bethel_app_final/BACK_END/Services/Functions/Authentication.dart';
 import 'package:bethel_app_final/BACK_END/Services/Functions/Users.dart';
 import 'package:bethel_app_final/FRONT_END/MemberScreens/home_page.dart';
@@ -6,6 +8,7 @@ import 'package:bethel_app_final/FRONT_END/MemberScreens/widget_member/Calendar.
 import 'package:bethel_app_final/FRONT_END/MemberScreens/eventPage.dart';
 import 'package:bethel_app_final/FRONT_END/MemberScreens/NotificationTab.dart';
 import 'package:bethel_app_final/FRONT_END/constant/color.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -18,40 +21,57 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _currentTab = 0;
   int _notificationCount = 0; // Variable to store notification count
-
+  int _notificationStream = 0;
+  int _notificationAllStream = 0;
+  late Stream<int> notificationStream;
+  late Stream<int> notificationAllStream;
   final List<StatefulWidget> _children = [
     const MemberHomePage(),
     const EventPage(),
     const NotificationTab(), // Add NotificationTab instance here
     const Profile(),
   ];
-
+  UserStorage storage = UserStorage();
   @override
   void initState() {
     super.initState();
     // Initialize notification count
+    notificationStream = storage.readNotificationCountForBottomNavBar(TapAuth().auth.currentUser!.uid);
+    notificationAllStream = storage.readAllNotificationCountForBottomNavBar(TapAuth().auth.currentUser!.uid);
     _updateNotificationCount();
+    _updateAllNotification();
+    _counter();
   }
 
-  // Method to update notification count
-  void _updateNotificationCount() {
-    // Subscribe to notification stream and count unread notifications
-    UserStorage().getNotification(TapAuth().auth.currentUser!.uid).listen((snapshot) {
+  void _updateAllNotification() {
+    notificationAllStream.listen((snapshot) {
       setState(() {
-        _notificationCount = snapshot.docs.length;
+        _notificationAllStream = snapshot;
+        _counter();
       });
     });
   }
 
-  //i taga zero sa counter hahahah
-  void _resetNotificationCount() {
+  void _updateNotificationCount() {
+    notificationStream.listen((snapshot) {
+      setState(() {
+        _notificationStream = snapshot;
+        _counter();
+      });
+    });
+  }
+
+  void _counter() {
     setState(() {
-      _notificationCount = 0;
+      _notificationCount = (_notificationStream - _notificationAllStream).abs();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    log(_notificationCount.toString());
+    log('$_notificationStream stream');
+    log('$_notificationAllStream all');
     return Scaffold(
       backgroundColor: appGreen2,
       body: SafeArea(
@@ -70,29 +90,18 @@ class _HomePageState extends State<HomePage> {
           iconSize: 20.0,
           selectedFontSize: 12.0,
           unselectedFontSize: 12.0,
-
           onTap: (int value) {
             setState(() {
               _currentTab = value;
-              if (value == 0) {
-                _resetNotificationCount();
-              }else if(value == 1) {
-                _resetNotificationCount();
-              }else if(value == 2) {
-                _resetNotificationCount();
-              }else if(value == 3) {
-                _resetNotificationCount();
-              }
             });
           },
-
           currentIndex: _currentTab,
           items: [
             BottomNavigationBarItem(
               icon: Icon(
                 Icons.home,
                 size: 20,
-                color: _currentTab == 0 ? appBlack : appWhite, // Set icon color based on selection
+                color: _currentTab == 0 ? appBlack : appWhite,
               ),
               label: 'Home',
             ),
@@ -100,7 +109,7 @@ class _HomePageState extends State<HomePage> {
               icon: Icon(
                 Icons.event_available,
                 size: 20,
-                color: _currentTab == 1 ? appBlack : appWhite, // Set icon color based on selection
+                color: _currentTab == 1 ? appBlack : appWhite,
               ),
               label: 'Appointment',
             ),
@@ -110,7 +119,7 @@ class _HomePageState extends State<HomePage> {
                   Icon(
                     Icons.notifications,
                     size: 20,
-                    color: _currentTab == 2 ? appBlack : appWhite, // Set icon color based on selection
+                    color: _currentTab == 2 ? appBlack : appWhite,
                   ),
                   if (_notificationCount > 0)
                     Positioned(
@@ -143,7 +152,7 @@ class _HomePageState extends State<HomePage> {
               icon: Icon(
                 Icons.person,
                 size: 20,
-                color: _currentTab == 3 ? appBlack : appWhite, // Set icon color based on selection
+                color: _currentTab == 3 ? appBlack : appWhite,
               ),
               label: 'Profile',
             ),

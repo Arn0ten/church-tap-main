@@ -212,7 +212,7 @@ class UserStorage {
 
       log("Appointment $appointmentId approved for user $userID.");
 
-      await setNotification(userID, appointmentId,false);
+      await setNotification(userID, appointmentId);
 
       // Move appointment to 'Approved Appointment' collection
       await db
@@ -249,7 +249,9 @@ class UserStorage {
           .add(const Duration(days: 1))
           .subtract(const Duration(milliseconds: 1));
 
-      QuerySnapshot pendingAppointments = await db.collection("users").get(); // Fake initialize lang kay para sureball naay sulod.
+      QuerySnapshot pendingAppointments = await db
+          .collection("users")
+          .get(); // Fake initialize lang kay para sureball naay sulod.
 
       // kuhaon ang tanan pending request na same ang date
       List<String> userIDNames = [];
@@ -294,7 +296,7 @@ class UserStorage {
             log("Skipping appointment $cleanAppointmentId as it is the approved one.");
           } else {
             log("Denying appointment $cleanAppointmentId for user $userID because it conflicts with the approved appointment.");
-            await denyAppointment(userAppointmentID, appointmentId,true);
+            await denyAppointment(userAppointmentID, appointmentId, true);
           }
         }
       }
@@ -303,25 +305,14 @@ class UserStorage {
 
       // Check if there are pending appointments for the same date
       log("Found ${pendingAppointments.docs.length} appointments on the same date.");
-
-      // Deny all other appointments except the approved one
-      // for (var doc in pendingAppointments.docs) {
-      //   String appointmentId = doc.id;
-      //   log("Checking appointment: $appointmentId");
-      //
-      //   if (appointmentId != approvedAppointmentId) {
-      //     log("Denying appointment $appointmentId for user $userID because it conflicts with the approved appointment.");
-      //     await denyAppointment(userID, appointmentId);
-      //   } else {
-      //     log("Skipping appointment $appointmentId as it is the approved one.");
-      //   }
-      // }
     } catch (e) {
       log("Error denying other appointments on the same date: $e");
     }
   }
 
-  Future<void> denyAppointment(String userID, String appointmentId,bool isRescheduled) async {
+  Future<void> denyAppointment(
+      String userID, String appointmentId, bool isRescheduled) async {
+    String status = isRescheduled ? 'Rescheduled' : 'Denied';
     try {
       DocumentSnapshot appointmentDoc = await db
           .collection("users")
@@ -340,8 +331,8 @@ class UserStorage {
           .doc("Event")
           .collection("Pending Appointment")
           .doc(appointmentId)
-          .update({'status': 'Denied'});
-      await setNotification(userID, appointmentId,isRescheduled);
+          .update({'status': status});
+      await setNotification(userID, appointmentId);
 
       // Move appointment to 'Denied Appointment' collection
       await db
@@ -375,7 +366,7 @@ class UserStorage {
     return db.collectionGroup("Church Event").snapshots();
   }
 
-  Future<void> setNotification(String uid, String appointmentId,bool isRescheduled) async {
+  Future<void> setNotification(String uid, String appointmentId) async {
     DocumentSnapshot documentSnapshot = await db
         .collection("users")
         .doc("members")
@@ -396,7 +387,6 @@ class UserStorage {
       'title': 'Appointment Update',
       'body': 'Your appointment is pending. Please confirm.',
       'imageUrl': 'https://example.com/notification-image.jpg',
-      'isRescheduled': isRescheduled
     });
   }
 
@@ -408,6 +398,29 @@ class UserStorage {
         .doc('Event')
         .collection('Notification')
         .snapshots();
+  }
+
+  Stream<int> readNotificationCountForBottomNavBar(String uID) {
+    return db
+        .collection('users')
+        .doc('members')
+        .collection(uID)
+        .doc('Event')
+        .collection('Notification')
+        .where('isRead', isEqualTo: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.length);
+  }
+
+  Stream<int> readAllNotificationCountForBottomNavBar(String uID){
+    return db
+        .collection('users')
+        .doc('members')
+        .collection(uID)
+        .doc('Event')
+        .collection('Notification')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.length);
   }
 
   // Future<void> UnreadNotification(String uid, String appointmentId) async {
@@ -469,6 +482,21 @@ class UserStorage {
         value.docs.clear();
       },
     );
+  }
+
+  Future<void> deleteNotification(String uID, String documentId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc("members")
+          .collection(uID)
+          .doc("Event")
+          .collection("Notification")
+          .doc(documentId)
+          .delete();
+    } catch (e) {
+      print("Error deleting notification: $e");
+    }
   }
 
 // Function to suggest reschedule and notify the owner

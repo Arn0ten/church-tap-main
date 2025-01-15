@@ -1,5 +1,8 @@
+import 'dart:developer';
+
 import 'package:bethel_app_final/BACK_END/Services/Functions/Authentication.dart';
 import 'package:bethel_app_final/BACK_END/Services/Functions/Users.dart';
+import 'package:bethel_app_final/FRONT_END/MemberScreens/screen_pages/event_screen_pages/event_source_directory/edit_event.dart';
 import 'package:bethel_app_final/FRONT_END/constant/color.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -139,7 +142,6 @@ class _NotificationTabState extends State<NotificationTab> {
   }
 
   @override
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
@@ -198,8 +200,11 @@ class _NotificationTabState extends State<NotificationTab> {
                           break;
                         default:
                           badgeColor = Colors.blue;
+                          break;
                       }
-
+                      // for(var a in notifications){
+                      //   log('${a.id}');
+                      // }
                       return GestureDetector(
                         onTap: isRead ? null : () => _markAsRead(doc.id),
                         child: Container(
@@ -307,7 +312,7 @@ class _NotificationTabState extends State<NotificationTab> {
                                       ),
                                     ),
                                     Text(
-                                      notif['status'] == 'Denied'
+                                      notif['status'] == 'Rescheduled'
                                           ? 'Admin suggests you to reschedule'
                                           : '9:30 AM onwards', // Default value
                                       style: TextStyle(
@@ -323,30 +328,35 @@ class _NotificationTabState extends State<NotificationTab> {
                                   ],
                                 ),
                                 const SizedBox(height: 2),
-                                if (notif['status'] == 'Denied')
-                                  GestureDetector(
-                                    onTap: () {
-                                      // Navigate to the edit appointment page
-                                      Navigator.pushNamed(
-                                          context, '/editAppointment',
-                                          arguments: doc.id);
-                                    },
-                                    child: const Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        Text(
+                                if (notif['status'] == 'Rescheduled')
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () => Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => EditEvent(
+                                                documentId: notifications[index].id,
+                                                firstDate: DateTime.now(),
+                                                lastDate: DateTime.now(),
+                                                isAdmin: false,
+                                                passDocument: notifications[index],
+                                              ),
+                                            )),
+                                        child: const Text(
                                           'Reschedule',
                                           style: TextStyle(
+                                            decorationColor: Colors.red,
                                             decoration:
                                                 TextDecoration.underline,
                                             fontSize: 14,
-                                            color: Colors.black,
+                                            color: Colors.red,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
                                 const SizedBox(height: 2),
                                 Text.rich(
