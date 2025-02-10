@@ -393,38 +393,7 @@ class _AdminApprovalState extends State<AdminApproval> {
 
                     if (confirmation == true) {
                       try {
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (BuildContext context) {
-                            return Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  LoadingAnimationWidget.staggeredDotsWave(
-                                    color: appGreen,
-                                    size: 50.0,
-                                  ),
-                                  SizedBox(height: 16),
-                                  Text(
-                                    isApprove ? "Approving appointment..." : "Denying appointment...",
-                                    style: const TextStyle(fontSize: 16, color: appWhite),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        );
 
-                        // Handle the case where the appointment is being approved
-                        if (isApprove) {
-                          // Call the method to deny appointments on the same date except the approved one
-                          // await userStorage.removeSameDateIfAccepted(userID, appointmentId);
-                          // Proceed with approving the appointment
-                          await _performApprovedAppointment(appointmentId, userID);
-
-                          // Show success message to the user
-                          DialogHelper.showSnackBar(context, "Appointment successfully approved.");
                         } else {
                           // Handle denial of the appointment
                           await _performDenyAppointment(appointmentId, userID);
@@ -1004,13 +973,6 @@ class _AdminApprovalState extends State<AdminApproval> {
                                               maxLines: 2, // Limits to 2 lines
                                               overflow: TextOverflow
                                                   .ellipsis, // Adds ellipsis if the text exceeds 2 lines
-                                            ),
-                                            Row(
-                                              children: [
-
-                                              ],
-                                            ),
-                                            // Display "Suggest to Reschedule" if not high priority
 
                                           ],
                                         ),

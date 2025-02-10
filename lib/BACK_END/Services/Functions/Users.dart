@@ -1,46 +1,47 @@
 import 'dart:async';
 import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:get/get.dart';
 
 class UserStorage {
   //TODO write database for all users
   final FirebaseFirestore db = FirebaseFirestore.instance;
 
-
-  Future<void> createUser(String uniqueID,
-      Map<String, String> userInformation, String type) async {
+  Future<void> createUser(
+      String uniqueID, Map<String, String> userInformation, String type) async {
     try {
-      db.collection("users")
+      db
+          .collection("users")
           .doc(type)
           .collection(uniqueID)
           .doc("About User")
           .set(userInformation);
-    }
-    catch (e) {
+    } catch (e) {
       log("Error code STORAGE: $e");
     }
   }
 
-
-  Future<void> createMemberEvent(String uniqueID, Map<String, dynamic> dateTime,
-      String type) async {
+  Future<void> createMemberEvent(
+      String uniqueID, Map<String, dynamic> dateTime, String type) async {
     try {
       if (type == "members") {
-        db.collection("users")
+        db
+            .collection("users")
             .doc("members")
             .collection(uniqueID)
             .doc("Event")
             .collection("Pending Appointment")
-            .doc().set(dateTime);
-      }
-      else {
-        db.collection("users")
+            .doc()
+            .set(dateTime);
+      } else {
+        db
+            .collection("users")
             .doc("admins")
             .collection(uniqueID)
             .doc("Event")
             .collection("Church Event")
-            .doc().set(dateTime);
+            .doc()
+            .set(dateTime);
       }
     } catch (e) {
       log("Error code STORAGE: $e");
@@ -51,7 +52,8 @@ class UserStorage {
     List<DateTime> documents = [];
     try {
       if (type == "members") {
-        await db.collection("users")
+        await db
+            .collection("users")
             .doc("members")
             .collection(uid)
             .doc("Event")
@@ -64,11 +66,8 @@ class UserStorage {
             documents.add(dats);
           }
         });
-      }
-      else {
-        await db.collectionGroup("Church Event")
-            .get()
-            .then((value) {
+      } else {
+        await db.collectionGroup("Church Event").get().then((value) {
           for (var element in value.docs) {
             Timestamp t = element.data()["date"];
             DateTime dats = t.toDate();
@@ -76,16 +75,14 @@ class UserStorage {
           }
         });
       }
-    }
-    catch (e) {
-
-    }
+    } catch (e) {}
     return documents;
   }
 
   Future<List<DateTime>> getPendingDate(String uid) async {
     List<DateTime> documents = [];
-    await db.collection("users")
+    await db
+        .collection("users")
         .doc("members")
         .collection(uid)
         .doc("Event")
@@ -103,7 +100,8 @@ class UserStorage {
 
   Future<void> setDisableDay(Map<String, dynamic> dateTime, String uid) async {
     try {
-      db.collection("users")
+      db
+          .collection("users")
           .doc("admins")
           .collection(uid)
           .doc("Event")
@@ -116,39 +114,41 @@ class UserStorage {
   }
 
   Future<void> unsetDisableDay(int day, int month, int year) async {
-    db.collectionGroup("Disabled Days")
-        .get()
-        .then((value) {
-      for (var element in value.docs) {
-        var a = element.data()['date'];
-        Timestamp timestamp = a;
-        DateTime dateTime = timestamp.toDate();
-        if (dateTime.day == day && dateTime.month == month &&
-            dateTime.year == year) {
-          db.runTransaction((Transaction transaction) async {
-            transaction.delete(element.reference);
-          },);
-          // Remove Break due to duplicate disabled dates
+    db.collectionGroup("Disabled Days").get().then(
+      (value) {
+        for (var element in value.docs) {
+          var a = element.data()['date'];
+          Timestamp timestamp = a;
+          DateTime dateTime = timestamp.toDate();
+          if (dateTime.day == day &&
+              dateTime.month == month &&
+              dateTime.year == year) {
+            db.runTransaction(
+              (Transaction transaction) async {
+                transaction.delete(element.reference);
+              },
+            );
+            // Remove Break due to duplicate disabled dates
+          } else {
+            continue;
+          }
         }
-        else {
-          continue;
-        }
-      }
-    },);
+      },
+    );
   }
 
   Future<List<DateTime>> getDisableDay() async {
     List<DateTime> documents = [];
     try {
-      await db.collectionGroup("Disabled Days")
-          .get()
-          .then((value) {
-        for (var element in value.docs) {
-          Timestamp t = element.data()["date"];
-          DateTime dats = t.toDate();
-          documents.add(dats);
-        }
-      },);
+      await db.collectionGroup("Disabled Days").get().then(
+        (value) {
+          for (var element in value.docs) {
+            Timestamp t = element.data()["date"];
+            DateTime dats = t.toDate();
+            documents.add(dats);
+          }
+        },
+      );
     } catch (e) {}
     return documents;
   }
@@ -163,11 +163,8 @@ class UserStorage {
         .snapshots();
   }
 
-
   Stream<QuerySnapshot> fetchAllPendingAppointments() {
-    return db
-        .collectionGroup("Pending Appointment")
-        .snapshots();
+    return db.collectionGroup("Pending Appointment").snapshots();
   }
 
   Stream<QuerySnapshot> fetchApprovedAppointments(String uid) {
@@ -181,9 +178,7 @@ class UserStorage {
   }
 
   Stream<QuerySnapshot> fetchAllApprovedAppointments() {
-    return db
-        .collectionGroup("Approved Appointment")
-        .snapshots();
+    return db.collectionGroup("Approved Appointment").snapshots();
   }
 
   Future<void> approvedAppointment(String userID, String appointmentId) async {
@@ -329,18 +324,12 @@ class UserStorage {
     }
   }
 
-
   Stream<QuerySnapshot> fetchDenyAppointment() {
-    return db
-        .collectionGroup("Denied Appointment")
-        .snapshots();
+    return db.collectionGroup("Denied Appointment").snapshots();
   }
 
-
   Stream<QuerySnapshot> fetchCreateMemberEvent() {
-    return db
-        .collectionGroup("Church Event")
-        .snapshots();
+    return db.collectionGroup("Church Event").snapshots();
   }
 
   Future<void> setNotification(String uid, String appointmentId) async {
@@ -398,42 +387,86 @@ class UserStorage {
 
   Future<bool> checkAdmin(String uid) async {
     bool a = false;
-    var test = db.collection('users')
-        .doc('admins').get();
-    test.then((value) {
-      if (uid == value.id) {
-        a = true;
-      }
-      else {
-        a = false;
-      }
-    },);
+    var test = db.collection('users').doc('admins').get();
+    test.then(
+      (value) {
+        if (uid == value.id) {
+          a = true;
+        } else {
+          a = false;
+        }
+      },
+    );
     return a;
   }
 
   Future<bool> checkAdmins(String uid) async {
     bool check = false;
-    await db.collection('users').doc('admins').collection(uid).get().then((
-        value) {
-      if (value.size > 0) {
-        check = true;
-      }
-      else {
-        check = false;
-      }
-    },);
+    await db.collection('users').doc('admins').collection(uid).get().then(
+      (value) {
+        if (value.size > 0) {
+          check = true;
+        } else {
+          check = false;
+        }
+      },
+    );
     return check;
   }
 
-  Future<void> deleteOldDates() async{
-  //disabled Days
-   db.collectionGroup('Church Event').where('date',isLessThan: DateTime.now()).get().then((value) {
-     value.docs.clear();
-   },);
+  Future<void> deleteOldDates() async {
+    //disabled Days
+    db
+        .collectionGroup('Church Event')
+        .where('date', isLessThan: DateTime.now())
+        .get()
+        .then(
+      (value) {
+        value.docs.clear();
+      },
+    );
   }
 
+  Future<void> brainfuck() async {
+    List<String> userID = [];
+    db.collectionGroup('Pending Appointment').get().then(
+      (value) {
+        for (int i = 0; i < value.docs.length; i++) {
+          String username = value.docs[i].get('userID');
+          //remove duplicating names
+          if (!userID.contains(username)) {
+            userID.add(username);
+          }
+        }
+      },
+    );
+    print(userID.length);
+  }
 
-// Function to suggest reschedule and notify the owner
-  // Method to suggest rescheduling
+  // NOTE!!! BALITAD ANG PAG IMPLEMENT SA APPOINTMENTID UG USERID SA ADMIN_APPROVAL WASTED 2 DAYS KAY BALIKTAD RA DIAY
+  Future<void> removeSameDateIfAccepted(
+      String appointmentID, String userID) async {
+    var value = await db.collectionGroup('Pending Appointment').get();
+    log(value.docs.length.toString());
+    log('$appointmentID USER ID');
+    log('$userID APPOINTMENT ID');
 
+
+
+    try {
+      // Fuck optimization
+      for (int i = 0; i < value.docs.length; i++) {
+        Timestamp secodaryTime = value.docs[i].get('date');
+        if (value.docs[i].id != appointmentID &&
+            secodaryTime.toDate().isAtSameMomentAs(primaryTime.toDate())) {
+          log('$secodaryTime secondary');
+          await denyAppointment(value.docs[i].get('userID'), value.docs[i].id);
+        } else {
+          continue;
+        }
+      }
+    } catch (e) {
+      log('Brainfuck $e');
+    }
+  }
 }
