@@ -192,6 +192,12 @@ class UserStorage {
           .doc(appointmentId)
           .get();
 
+      // Get the date of the approved appointment
+      DateTime appointmentDate = (appointmentDoc.data() as Map<String, dynamic>)['date'].toDate();
+
+      // Deny all other appointments on the same date
+      await denyOtherAppointmentsOnSameDate(userID, appointmentId, appointmentDate);
+
       // Update status field to 'Approved'
       await db
           .collection("users")
@@ -202,7 +208,10 @@ class UserStorage {
           .doc(appointmentId)
           .update({'status': 'Approved'});
 
+      log("Appointment $appointmentId approved for user $userID.");
+
       await setNotification(userID, appointmentId);
+
       // Move appointment to 'Approved Appointment' collection
       await db
           .collection("users")
@@ -222,10 +231,52 @@ class UserStorage {
           .collection("Pending Appointment")
           .doc(appointmentId)
           .delete();
+
     } catch (e) {
       log("Error approving appointment: $e");
     }
   }
+
+  /////////// gi strip nalang nako ang date
+  Future<void> denyOtherAppointmentsOnSameDate(String userID, String approvedAppointmentId, DateTime appointmentDate) async {
+    try {
+      // Strip the time from the appointmentDate (set the time to midnight)
+      DateTime startOfDay = DateTime(appointmentDate.year, appointmentDate.month, appointmentDate.day);
+      DateTime endOfDay = startOfDay.add(Duration(days: 1)).subtract(Duration(milliseconds: 1));
+
+      // Fetch all pending appointments for the same user on the same date
+      QuerySnapshot pendingAppointments = await db
+          .collection("users")
+          .doc("members")
+          .collection(userID)
+          .doc("Event")
+          .collection("Pending Appointment")
+          .where('date', isGreaterThanOrEqualTo: startOfDay)
+          .where('date', isLessThanOrEqualTo: endOfDay)
+          .get();
+
+      // Check if there are pending appointments for the same date
+      log("Found ${pendingAppointments.docs.length} appointments on the same date.");
+
+      // Deny all other appointments except the approved one
+      for (var doc in pendingAppointments.docs) {
+        String appointmentId = doc.id;
+        log("Checking appointment: $appointmentId");
+
+        if (appointmentId != approvedAppointmentId) {
+          log("Denying appointment $appointmentId for user $userID because it conflicts with the approved appointment.");
+          await denyAppointment(userID, appointmentId);
+        } else {
+          log("Skipping appointment $appointmentId as it is the approved one.");
+        }
+      }
+
+    } catch (e) {
+      log("Error denying other appointments on the same date: $e");
+    }
+  }
+
+
 
   Future<void> denyAppointment(String userID, String appointmentId) async {
     try {
@@ -297,7 +348,12 @@ class UserStorage {
         .doc('Event')
         .collection('Notification')
         .doc(appointmentId)
-        .set(documentSnapshot.data() as Map<String, dynamic>);
+        .set({
+      ...documentSnapshot.data() as Map<String, dynamic>,
+      'title': 'Appointment Update',
+      'body': 'Your appointment is pending. Please confirm.',
+      'imageUrl': 'https://example.com/notification-image.jpg',
+    });
   }
 
   Stream<QuerySnapshot> getNotification(String uid) {
@@ -395,17 +451,7 @@ class UserStorage {
     log('$appointmentID USER ID');
     log('$userID APPOINTMENT ID');
 
-    DocumentSnapshot primaryUser = await db
-        .collection('users')
-        .doc('members')
-        .collection(appointmentID)
-        .doc('Event')
-        .collection('Pending Appointment')
-        .doc(userID)
-        .get();
 
-    Timestamp primaryTime = primaryUser.get('date');
-    log('$primaryTime primary');
 
     try {
       // Fuck optimization
