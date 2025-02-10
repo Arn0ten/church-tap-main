@@ -25,13 +25,12 @@ class _NotificationTabState extends State<NotificationTab> {
 
   @override
   void initState() {
-    _notificationStream = UserStorage()
-        .getNotification(TapAuth()
-        .auth.currentUser!
-        .uid);
+    _notificationStream =
+        UserStorage().getNotification(TapAuth().auth.currentUser!.uid);
     _notificationStream = _getNotificationStream();
     super.initState();
   }
+
   Stream<QuerySnapshot> _getNotificationStream() {
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
     return FirebaseFirestore.instance
@@ -42,9 +41,11 @@ class _NotificationTabState extends State<NotificationTab> {
         .collection("Notification")
         .snapshots();
   }
+
   void _markAllAsRead() async {
     try {
-      final snapshot = await _notificationStream.first; // Get the current notifications
+      final snapshot =
+          await _notificationStream.first; // Get the current notifications
       final notifications = snapshot.docs;
 
       for (var doc in notifications) {
@@ -55,13 +56,13 @@ class _NotificationTabState extends State<NotificationTab> {
       }
       // Optionally show a confirmation
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('All notifications marked as read.')),
+        const SnackBar(content: Text('All notifications marked as read.')),
       );
     } catch (e) {
       // Handle errors
       print('Error marking notifications as read: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error marking notifications as read.')),
+        const SnackBar(content: Text('Error marking notifications as read.')),
       );
     }
   }
@@ -121,8 +122,6 @@ class _NotificationTabState extends State<NotificationTab> {
     final currentUser = FirebaseAuth.instance.currentUser;
     return currentUser?.uid ?? '';
   }
-
-
 
   Future<void> markNotificationAsRead(String uid, String documentId) async {
     try {
@@ -185,7 +184,8 @@ class _NotificationTabState extends State<NotificationTab> {
                       final notif = doc.data() as Map<String, dynamic>;
                       final isRead = notif['isRead'] ?? false;
                       final date = (notif['date'] as Timestamp).toDate();
-                      final formattedDate = DateFormat('MMM dd, yyyy').format(date);
+                      final formattedDate =
+                          DateFormat('MMM dd, yyyy').format(date);
 
                       // Define badge color based on status
                       Color badgeColor;
@@ -203,12 +203,15 @@ class _NotificationTabState extends State<NotificationTab> {
                       return GestureDetector(
                         onTap: isRead ? null : () => _markAsRead(doc.id),
                         child: Container(
-                          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                          margin: const EdgeInsets.symmetric(
+                              vertical: 8, horizontal: 4),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
                             color: isRead
-                                ? Colors.grey[300] // Color for read notifications
-                                : Colors.green[200], // Color for unread notifications
+                                ? Colors
+                                    .grey[300] // Color for read notifications
+                                : Colors.green[
+                                    200], // Color for unread notifications
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.grey.withOpacity(0.2),
@@ -224,12 +227,13 @@ class _NotificationTabState extends State<NotificationTab> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Expanded(
                                       child: Text(
                                         notif['appointmenttype'],
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           fontWeight: FontWeight.w900,
                                           fontSize: 20,
                                           color: Colors.black87,
@@ -238,10 +242,12 @@ class _NotificationTabState extends State<NotificationTab> {
                                     ),
                                     if (!isRead)
                                       Container(
-                                        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 4, horizontal: 8),
                                         decoration: BoxDecoration(
                                           color: Colors.green,
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
                                         ),
                                         child: const Text(
                                           "New",
@@ -255,7 +261,8 @@ class _NotificationTabState extends State<NotificationTab> {
                                   ],
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: badgeColor,
                                     borderRadius: BorderRadius.circular(20),
@@ -269,12 +276,11 @@ class _NotificationTabState extends State<NotificationTab> {
                                   ),
                                 ),
                                 const SizedBox(height: 10),
-
                                 Row(
                                   children: [
-                                    Text(
+                                    const Text(
                                       'Date: ',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 15,
                                         color: Colors.black87,
@@ -290,29 +296,59 @@ class _NotificationTabState extends State<NotificationTab> {
                                   ],
                                 ),
                                 const SizedBox(height: 2),
-
                                 Row(
                                   children: [
-                                    Text(
+                                    const Text(
                                       'Time: ',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 15,
                                         color: Colors.black87,
                                       ),
                                     ),
                                     Text(
-                                      '9:30 AM onwards',
-                                      style: const TextStyle(
+                                      notif['status'] == 'Denied'
+                                          ? 'Admin suggests you to reschedule'
+                                          : '9:30 AM onwards', // Default value
+                                      style: TextStyle(
                                         fontSize: 14,
-                                        color: Colors.black54,
-                                        fontWeight: FontWeight.normal,
+                                        fontWeight: notif['status'] == 'Denied'
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                        color: notif['status'] == 'Denied'
+                                            ? Colors.red
+                                            : Colors.black54,
                                       ),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 2),
-
+                                if (notif['status'] == 'Denied')
+                                  GestureDetector(
+                                    onTap: () {
+                                      // Navigate to the edit appointment page
+                                      Navigator.pushNamed(
+                                          context, '/editAppointment',
+                                          arguments: doc.id);
+                                    },
+                                    child: const Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Reschedule',
+                                          style: TextStyle(
+                                            decoration:
+                                                TextDecoration.underline,
+                                            fontSize: 14,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                const SizedBox(height: 2),
                                 Text.rich(
                                   TextSpan(
                                     children: [
@@ -336,35 +372,6 @@ class _NotificationTabState extends State<NotificationTab> {
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-
-                                if (notif['status'] == 'Denied')
-                                  GestureDetector(
-                                    onTap: () {
-                                      // Navigate to the edit appointment page
-                                      Navigator.pushNamed(context, '/editAppointment', arguments: doc.id);
-                                    },
-                                    child: Row(
-                                      children: [
-                                        Text(
-                                          'Reason:  ',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-
-                                        ),
-                                        Text(
-                                          '"Conflicts with other that has a higher priority."',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.red,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
@@ -374,7 +381,8 @@ class _NotificationTabState extends State<NotificationTab> {
                                         color: Colors.red,
                                         size: 20.0,
                                       ),
-                                      onPressed: () => _deleteNotification(doc.id),
+                                      onPressed: () =>
+                                          _deleteNotification(doc.id),
                                     ),
                                   ],
                                 ),
@@ -393,6 +401,4 @@ class _NotificationTabState extends State<NotificationTab> {
       ),
     );
   }
-
-
 }
